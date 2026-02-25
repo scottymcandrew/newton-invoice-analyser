@@ -1,0 +1,854 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Newton Invoice Analyser — Balfour Park Residents</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<style>
+  :root {
+    --navy: #1F3864;
+    --blue: #2E5090;
+    --red: #CC0000;
+    --orange: #E67E00;
+    --green: #1B7A3D;
+    --bg: #F8F9FA;
+    --card: #FFFFFF;
+    --border: #DEE2E6;
+    --text: #212529;
+    --muted: #6C757D;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif; background: var(--bg); color: var(--text); line-height: 1.6; }
+
+  .container { max-width: 960px; margin: 0 auto; padding: 20px; }
+
+  header { background: var(--navy); color: white; padding: 24px 0; margin-bottom: 24px; }
+  header .container { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; }
+  header h1 { font-size: 1.4rem; font-weight: 700; }
+  header p { font-size: 0.85rem; opacity: 0.8; }
+  .tab-bar { display: flex; gap: 4px; }
+  .tab-btn { background: rgba(255,255,255,0.15); color: white; border: none; padding: 8px 16px; border-radius: 6px 6px 0 0; cursor: pointer; font-size: 0.85rem; font-weight: 600; transition: background 0.2s; }
+  .tab-btn:hover { background: rgba(255,255,255,0.25); }
+  .tab-btn.active { background: var(--bg); color: var(--navy); }
+
+  .card { background: var(--card); border: 1px solid var(--border); border-radius: 8px; padding: 20px; margin-bottom: 16px; }
+  .card h2 { font-size: 1.1rem; color: var(--navy); margin-bottom: 12px; }
+  .card h3 { font-size: 0.95rem; color: var(--blue); margin: 16px 0 8px; }
+
+  .drop-zone { border: 2px dashed var(--border); border-radius: 8px; padding: 40px; text-align: center; cursor: pointer; transition: all 0.2s; background: #FAFBFC; }
+  .drop-zone:hover, .drop-zone.drag-over { border-color: var(--blue); background: #EDF2F7; }
+  .drop-zone p { color: var(--muted); margin-bottom: 8px; }
+  .drop-zone .big { font-size: 2rem; margin-bottom: 8px; }
+
+  .btn { display: inline-block; padding: 8px 16px; border-radius: 6px; border: none; cursor: pointer; font-size: 0.85rem; font-weight: 600; transition: all 0.2s; }
+  .btn-primary { background: var(--navy); color: white; }
+  .btn-primary:hover { background: var(--blue); }
+  .btn-danger { background: var(--red); color: white; }
+  .btn-green { background: var(--green); color: white; }
+  .btn-green:hover { opacity: 0.9; }
+  .btn-outline { background: transparent; border: 1px solid var(--border); color: var(--text); }
+  .btn-outline:hover { background: #F0F0F0; }
+  .btn-sm { padding: 4px 10px; font-size: 0.8rem; }
+
+  table { width: 100%; border-collapse: collapse; font-size: 0.85rem; margin-top: 8px; }
+  th { background: var(--navy); color: white; padding: 8px 10px; text-align: left; font-weight: 600; }
+  td { padding: 8px 10px; border-bottom: 1px solid var(--border); }
+  tr:hover td { background: #F8F9FA; }
+
+  .badge { display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: 0.75rem; font-weight: 600; }
+  .badge-red { background: #FEE2E2; color: var(--red); }
+  .badge-orange { background: #FFF3E0; color: var(--orange); }
+  .badge-green { background: #E8F5E9; color: var(--green); }
+  .badge-blue { background: #E3F2FD; color: var(--blue); }
+
+  .finding { border-left: 4px solid var(--red); padding: 12px 16px; margin: 8px 0; background: #FFF8F8; border-radius: 0 6px 6px 0; }
+  .finding.warning { border-color: var(--orange); background: #FFFBF5; }
+  .finding.info { border-color: var(--blue); background: #F5F8FF; }
+  .finding h4 { font-size: 0.9rem; margin-bottom: 4px; }
+  .finding p { font-size: 0.85rem; color: var(--muted); }
+
+  .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; margin-bottom: 16px; }
+  .stat-card { background: white; border: 1px solid var(--border); border-radius: 8px; padding: 16px; text-align: center; }
+  .stat-card .value { font-size: 1.8rem; font-weight: 700; color: var(--navy); }
+  .stat-card .label { font-size: 0.8rem; color: var(--muted); margin-top: 4px; }
+
+  .tab-content { display: none; }
+  .tab-content.active { display: block; }
+
+  .progress-bar { height: 4px; background: var(--border); border-radius: 2px; overflow: hidden; margin: 12px 0; }
+  .progress-bar .fill { height: 100%; background: var(--blue); transition: width 0.3s; }
+
+  .resident-row { display: flex; align-items: center; gap: 12px; padding: 10px; border-bottom: 1px solid var(--border); }
+  .resident-row .name { font-weight: 600; flex: 1; }
+  .resident-row .amount { font-weight: 700; color: var(--navy); }
+
+  .hidden { display: none !important; }
+
+  #nameModal { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 100; }
+  #nameModal .modal-content { background: white; border-radius: 12px; padding: 24px; max-width: 400px; width: 90%; }
+  #nameModal input { width: 100%; padding: 10px; border: 1px solid var(--border); border-radius: 6px; font-size: 1rem; margin: 12px 0; }
+  #nameModal .note { font-size: 0.8rem; color: var(--muted); margin-bottom: 12px; }
+
+  .empty-state { text-align: center; padding: 40px; color: var(--muted); }
+  .empty-state .icon { font-size: 3rem; margin-bottom: 12px; }
+
+  @media (max-width: 600px) {
+    .stats-grid { grid-template-columns: 1fr 1fr; }
+    header h1 { font-size: 1.1rem; }
+    .container { padding: 12px; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="container">
+    <div>
+      <h1>Newton Invoice Analyser</h1>
+      <p>Balfour Park Residents &mdash; Billing Discrepancy Tool</p>
+    </div>
+    <div class="tab-bar">
+      <button class="tab-btn active" onclick="showTab('upload')">Upload</button>
+      <button class="tab-btn" onclick="showTab('results')">My Results</button>
+      <button class="tab-btn" onclick="showTab('community')">Community</button>
+    </div>
+  </div>
+</header>
+
+<div class="container">
+
+  <!-- UPLOAD TAB -->
+  <div id="tab-upload" class="tab-content active">
+    <div class="card">
+      <h2>Upload Your Newton Invoices</h2>
+      <p style="color: var(--muted); font-size: 0.85rem; margin-bottom: 16px;">
+        Drop your Newton Property Management PDF invoices below. Everything runs in your browser &mdash; no data is sent anywhere.
+      </p>
+      <div class="drop-zone" id="dropZone" onclick="document.getElementById('fileInput').click()">
+        <div class="big">📄</div>
+        <p><strong>Drop PDF invoices here</strong> or click to browse</p>
+        <p style="font-size: 0.8rem;">Accepts Newton common charge invoices and outstanding balance notices</p>
+      </div>
+      <input type="file" id="fileInput" multiple accept=".pdf" style="display:none" onchange="handleFiles(this.files)">
+
+      <div id="fileList" class="hidden" style="margin-top: 16px;">
+        <h3>Uploaded Files</h3>
+        <table>
+          <thead><tr><th>File</th><th>Status</th><th>Invoice #</th><th>Total</th></tr></thead>
+          <tbody id="fileListBody"></tbody>
+        </table>
+        <div style="margin-top: 12px; display: flex; gap: 8px;">
+          <button class="btn btn-primary" onclick="analyseAll()">Analyse All Invoices</button>
+          <button class="btn btn-outline" onclick="clearAll()">Clear All</button>
+        </div>
+      </div>
+
+      <div id="parseProgress" class="hidden" style="margin-top: 16px;">
+        <p style="font-size: 0.85rem;">Parsing invoices...</p>
+        <div class="progress-bar"><div class="fill" id="progressFill" style="width: 0%"></div></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>What This Tool Checks</h2>
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; font-size: 0.85rem;">
+        <div><span class="badge badge-red">HIGH</span> Duplicate billing entries across invoices</div>
+        <div><span class="badge badge-red">HIGH</span> Debt collection fees charged to you</div>
+        <div><span class="badge badge-orange">MEDIUM</span> Share ratio changes (1/32 vs 1/191)</div>
+        <div><span class="badge badge-orange">MEDIUM</span> Cost increases after "corrections"</div>
+        <div><span class="badge badge-blue">INFO</span> Annual cost breakdown vs quoted ~£110</div>
+        <div><span class="badge badge-blue">INFO</span> Balance reminders during open disputes</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- RESULTS TAB -->
+  <div id="tab-results" class="tab-content">
+    <div id="noResults" class="card">
+      <div class="empty-state">
+        <div class="icon">📊</div>
+        <p>No invoices analysed yet. Upload your Newton PDFs to get started.</p>
+      </div>
+    </div>
+    <div id="resultsContent" class="hidden"></div>
+  </div>
+
+  <!-- COMMUNITY TAB -->
+  <div id="tab-community" class="tab-content">
+    <div class="card">
+      <h2>Community Overview</h2>
+      <p style="color: var(--muted); font-size: 0.85rem; margin-bottom: 16px;">
+        Share your results with neighbours to build a collective case. Export your data and import theirs.
+      </p>
+      <div class="stats-grid" id="communityStats">
+        <div class="stat-card"><div class="value" id="commResidents">0</div><div class="label">Residents Submitted</div></div>
+        <div class="stat-card"><div class="value" id="commInvoices">0</div><div class="label">Total Invoices</div></div>
+        <div class="stat-card"><div class="value" id="commFindings">0</div><div class="label">Total Findings</div></div>
+        <div class="stat-card"><div class="value" id="commAvgAnnual">-</div><div class="label">Avg Annual Cost</div></div>
+      </div>
+
+      <div style="display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap;">
+        <button class="btn btn-primary" onclick="exportMyData()">Export My Data</button>
+        <button class="btn btn-outline" onclick="document.getElementById('importInput').click()">Import Neighbour's Data</button>
+        <input type="file" id="importInput" accept=".json" style="display:none" onchange="importData(this.files[0])">
+        <button class="btn btn-green" onclick="exportCommunityReport()">Export Community Report</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Residents</h2>
+      <div id="residentsList">
+        <div class="empty-state">
+          <div class="icon">👥</div>
+          <p>No residents yet. Analyse your invoices and share with neighbours.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Common Findings Across Residents</h2>
+      <div id="commonFindings">
+        <div class="empty-state">
+          <p>Findings will appear here once multiple residents have submitted data.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- NAME MODAL -->
+<div id="nameModal" class="hidden">
+  <div class="modal-content">
+    <h2 style="color: var(--navy); margin-bottom: 8px;">Before we analyse...</h2>
+    <p class="note">Enter your name so we can identify your data in the community view. This stays on your device unless you choose to export it.</p>
+    <input type="text" id="residentName" placeholder="e.g. Mr & Mrs McAndrew" autofocus>
+    <p class="note">Your account number (from the invoices) will be detected automatically.</p>
+    <button class="btn btn-primary" onclick="confirmName()" style="width: 100%;">Start Analysis</button>
+  </div>
+</div>
+
+<script>
+pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+
+// ===== STATE =====
+let uploadedFiles = [];
+let parsedInvoices = [];
+let analysisResults = null;
+let communityData = JSON.parse(localStorage.getItem('newton_community') || '[]');
+
+// ===== TAB NAVIGATION =====
+function showTab(tab) {
+  document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+  document.getElementById('tab-' + tab).classList.add('active');
+  document.querySelectorAll('.tab-btn')[['upload','results','community'].indexOf(tab)].classList.add('active');
+  if (tab === 'community') refreshCommunity();
+}
+
+// ===== FILE HANDLING =====
+const dropZone = document.getElementById('dropZone');
+dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('drag-over'); });
+dropZone.addEventListener('dragleave', () => dropZone.classList.remove('drag-over'));
+dropZone.addEventListener('drop', e => { e.preventDefault(); dropZone.classList.remove('drag-over'); handleFiles(e.dataTransfer.files); });
+
+function handleFiles(files) {
+  const pdfs = Array.from(files).filter(f => f.type === 'application/pdf' || f.name.endsWith('.pdf'));
+  if (!pdfs.length) { alert('Please upload PDF files only.'); return; }
+  uploadedFiles.push(...pdfs);
+  renderFileList();
+}
+
+function renderFileList() {
+  document.getElementById('fileList').classList.remove('hidden');
+  const tbody = document.getElementById('fileListBody');
+  tbody.innerHTML = uploadedFiles.map((f, i) =>
+    `<tr><td>${f.name}</td><td><span class="badge badge-blue">Ready</span></td><td>-</td><td>-</td></tr>`
+  ).join('');
+}
+
+function clearAll() {
+  uploadedFiles = []; parsedInvoices = [];
+  document.getElementById('fileList').classList.add('hidden');
+  document.getElementById('fileListBody').innerHTML = '';
+}
+
+// ===== PDF PARSING =====
+async function extractTextFromPDF(file) {
+  const arrayBuffer = await file.arrayBuffer();
+  const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+  let fullText = '';
+  for (let i = 1; i <= pdf.numPages; i++) {
+    const page = await pdf.getPage(i);
+    const content = await page.getTextContent();
+    const lines = [];
+    let lastY = null;
+    for (const item of content.items) {
+      if (lastY !== null && Math.abs(item.transform[5] - lastY) > 2) lines.push('\n');
+      lines.push(item.str);
+      lastY = item.transform[5];
+    }
+    fullText += lines.join(' ') + '\n\n';
+  }
+  return fullText;
+}
+
+function parseNewtonInvoice(text, filename) {
+  const invoice = { filename, raw: text, charges: [], payments: [], findings: [] };
+
+  // === INVOICE NUMBER ===
+  const allSevenDigit = [...text.matchAll(/\b(\d{7})\b/g)].map(m => m[1]);
+  invoice.number = allSevenDigit.find(n => !n.startsWith('0672004')) || 'Unknown';
+
+  // === ACCOUNT NUMBER ===
+  const accMatch = text.match(/(0672\d{6})/);
+  invoice.accountNumber = accMatch ? accMatch[1] : 'Unknown';
+
+  // === PERIOD ===
+  const topText = text.substring(0, 500);
+  const dates = [...topText.matchAll(/(\d{2}\/\d{2}\/\d{4})/g)].map(m => m[1]);
+  if (dates.length >= 3) {
+    invoice.date = dates[0];
+    invoice.periodFrom = dates[1];
+    invoice.periodTo = dates[2];
+  } else if (dates.length >= 2) {
+    invoice.periodFrom = dates[0];
+    invoice.periodTo = dates[1];
+  }
+
+  // === SECTION-BASED CHARGE PARSING ===
+  const VALID_SHARES = ['1', '32', '191', '213'];
+  const lines = text.split('\n').map(l => l.trim()).filter(l => l.length > 0);
+  let currentSection = 'unknown';
+
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i];
+
+    if (/^\s*(?:Grounds|rounds)\s*$/i.test(line)) { currentSection = 'grounds'; continue; }
+    if (/(?:anage\s*ent\s*Fee|Management\s*Fee)/i.test(line) && line.length < 30) { currentSection = 'management'; continue; }
+    if (/^\s*Insurance\s*$/i.test(line)) { currentSection = 'insurance'; continue; }
+    if (/Apportionment\s*Fee/i.test(line)) { currentSection = 'apportionment'; continue; }
+
+    const shareMatch = line.match(/\b1\/(1|32|191|213)\b/);
+    if (!shareMatch) continue;
+    const share = '1/' + shareMatch[1];
+
+    const amountMatches = line.match(/([-]?[\d,]+\.\d{2})/g);
+    if (!amountMatches) continue;
+    const amounts = amountMatches.map(a => parseFloat(a.replace(',', '')));
+
+    const devTotal = amounts[0];
+    let yourCost = amounts.length >= 2 ? amounts[amounts.length - 1] : null;
+
+    if (amounts.length <= 1) {
+      const lookahead = [];
+      for (let j = i + 1; j < Math.min(i + 4, lines.length); j++) {
+        const nextAmounts = lines[j].match(/([-]?[\d,]+\.\d{2})/g);
+        if (nextAmounts) lookahead.push(...nextAmounts.map(a => parseFloat(a.replace(',', ''))));
+        if (lookahead.length >= 2) break;
+      }
+      yourCost = lookahead.length >= 2 ? lookahead[1] : (lookahead[0] || null);
+    }
+    if (yourCost === null) continue;
+
+    let description = '';
+    for (let j = Math.max(0, i - 6); j < i; j++) {
+      const prev = lines[j];
+      if (/^\d{2}\/\d{2}\/\d{4}\s/.test(prev) && prev.length > 40) continue;
+      if (/Kilgours|McAndrew|Newcraighall|Edinburgh|PAYMENTS|RECEIVED|BALANCE|Fie\s*lds/i.test(prev)) continue;
+      if (/maintenance|Fyvie|JD\s*Landscape|Grounds|Management|Insurance|Property|Newton|Travelers|HDN|NIG|Resolvecall|Debt|Collection|Agency|Apportionment|E-?billing|Discount/i.test(prev)) {
+        description += prev + ' ';
+      }
+    }
+    description = description.trim() || `${currentSection} charge`;
+
+    const isDebtFee = (currentSection === 'apportionment' && /resolvecall|debt|collection|agency/i.test(description)) ||
+                      /resolvecall|debt\s*collection/i.test(description);
+    const isEbillingDiscount = /e-?billing\s*discount/i.test(description);
+    const isManagementFee = (currentSection === 'management' || /management\s*fee/i.test(description)) && !isDebtFee && !isEbillingDiscount;
+    const isInsurance = (currentSection === 'insurance' || /insurance|travelers|hdn|nig/i.test(description)) && !isDebtFee;
+    const isGroundMaintenance = (currentSection === 'grounds' || /ground|maintenance|fyvie|jd\s*landscape|fencing/i.test(description))
+                                && !isManagementFee && !isDebtFee && !isInsurance && !isEbillingDiscount;
+    const isCredit = devTotal < 0 || /credit|cr\b/i.test(description) || isEbillingDiscount;
+
+    invoice.charges.push({
+      description: description.substring(0, 100),
+      share, devTotal, yourCost,
+      isGroundMaintenance, isManagementFee, isDebtFee, isInsurance, isCredit, isEbillingDiscount,
+      raw: line
+    });
+  }
+
+  // === INVOICE TOTAL ===
+  const allDR = [...text.matchAll(/([\d,]+\.\d{2})\s+DR/g)];
+  if (allDR.length > 0) {
+    const lastDR = parseFloat(allDR[allDR.length - 1][1].replace(',', ''));
+    invoice.total = lastDR;
+  }
+
+  // === VAT ===
+  const vatMatch = text.match(/VAT[:\s]*£?([\d,]+\.\d{2})/i);
+  if (vatMatch) invoice.vat = parseFloat(vatMatch[1].replace(',', ''));
+
+  // === TYPE ===
+  if (/outstanding\s*balance|reminder|notice/i.test(text)) invoice.type = 'reminder';
+  else if (invoice.charges.length > 0) invoice.type = 'invoice';
+  else invoice.type = 'unknown';
+
+  return invoice;
+}
+
+// ===== ANALYSIS ENGINE =====
+function analyseInvoices(invoices) {
+  const results = {
+    invoices: invoices,
+    findings: [],
+    summary: { totalCharged: 0, groundMaintenance: 0, managementFees: 0, debtFees: 0, insurance: 0, discounts: 0 }
+  };
+
+  // 1. Duplicate entries ACROSS DIFFERENT invoices
+  const chargeSignatures = new Map();
+  for (const inv of invoices) {
+    for (const charge of inv.charges) {
+      const sig = `${charge.share}|${charge.devTotal}|${charge.yourCost}`;
+      if (!chargeSignatures.has(sig)) chargeSignatures.set(sig, []);
+      chargeSignatures.get(sig).push({ invoice: inv.number, charge });
+    }
+  }
+  for (const [sig, occurrences] of chargeSignatures) {
+    const uniqueInvoices = new Set(occurrences.map(o => o.invoice));
+    if (uniqueInvoices.size > 1 && !occurrences[0].charge.isCredit && !occurrences[0].charge.isManagementFee) {
+      results.findings.push({
+        severity: 'HIGH', type: 'duplicate',
+        title: 'Potential Duplicate Billing Entry',
+        detail: `The charge "${occurrences[0].charge.description.substring(0, 60)}" (£${Math.abs(occurrences[0].charge.yourCost).toFixed(2)}) appears on invoices: ${[...uniqueInvoices].join(', ')}`,
+        invoices: [...uniqueInvoices]
+      });
+    }
+  }
+
+  // 2. Debt collection fees
+  const debtCharges = invoices.flatMap(inv => inv.charges.filter(c => c.isDebtFee));
+  if (debtCharges.length > 0) {
+    const totalDebt = debtCharges.reduce((sum, c) => sum + c.yourCost, 0);
+    results.findings.push({
+      severity: 'HIGH', type: 'debt-fees',
+      title: 'Debt Collection Fees Charged to You',
+      detail: `You have been charged £${totalDebt.toFixed(2)} in debt collection agency fees across ${debtCharges.length} invoice(s). The Written Statement of Services should explicitly permit these charges.`
+    });
+    results.summary.debtFees = totalDebt;
+  }
+
+  // 3. Mixed share ratios on ground maintenance
+  const shareRatios = new Set();
+  for (const inv of invoices) {
+    for (const charge of inv.charges) {
+      if (charge.isGroundMaintenance && charge.share !== '1/1') shareRatios.add(charge.share);
+    }
+  }
+  if (shareRatios.size > 1) {
+    results.findings.push({
+      severity: 'MEDIUM', type: 'share-change',
+      title: 'Ground Maintenance Share Ratio Changed',
+      detail: `Your ground maintenance charges use ${shareRatios.size} different share ratios: ${Array.from(shareRatios).join(', ')}. This change should have been clearly communicated.`
+    });
+  }
+
+  // 4. Calculate totals and annualised cost
+  let totalCharged = 0;
+  for (const inv of invoices) {
+    if (inv.total) totalCharged += inv.total;
+    for (const c of inv.charges) {
+      if (c.isGroundMaintenance && !c.isCredit) results.summary.groundMaintenance += Math.abs(c.yourCost);
+      if (c.isManagementFee && !c.isEbillingDiscount) results.summary.managementFees += c.yourCost;
+      if (c.isInsurance) results.summary.insurance += c.yourCost;
+      if (c.isDebtFee) results.summary.debtFees += c.yourCost;
+      if (c.isCredit || c.isEbillingDiscount) results.summary.discounts += c.yourCost;
+    }
+  }
+  results.summary.totalCharged = totalCharged;
+
+  // Work out the period covered — use contiguous billing cluster
+  function parseDDMMYYYY(s) {
+    if (!s) return null;
+    const parts = s.split('/');
+    if (parts.length !== 3) return null;
+    return new Date(parseInt(parts[2]), parseInt(parts[1]) - 1, parseInt(parts[0]));
+  }
+
+  const invoiceDates = invoices.map(inv => {
+    const d = parseDDMMYYYY(inv.periodFrom) || parseDDMMYYYY(inv.date) || parseDDMMYYYY(inv.periodTo);
+    return { inv, date: d };
+  }).filter(x => x.date && !isNaN(x.date.getTime())).sort((a, b) => a.date - b.date);
+
+  let contiguousInvoices = invoices;
+  let years = 1;
+  let periodLabel = '';
+
+  if (invoiceDates.length >= 2) {
+    let clusterStart = 0;
+    for (let i = 1; i < invoiceDates.length; i++) {
+      const gap = (invoiceDates[i].date - invoiceDates[i-1].date) / (1000 * 60 * 60 * 24);
+      if (gap > 180) clusterStart = i;
+    }
+
+    contiguousInvoices = invoiceDates.slice(clusterStart).map(x => x.inv);
+    const clusterDates = contiguousInvoices.flatMap(inv => [inv.periodFrom, inv.periodTo, inv.date].filter(Boolean)).map(parseDDMMYYYY).filter(d => d && !isNaN(d.getTime()));
+    const earliest = new Date(Math.min(...clusterDates.map(d => d.getTime())));
+    const latest = new Date(Math.max(...clusterDates.map(d => d.getTime())));
+    const daysDiff = (latest - earliest) / (1000 * 60 * 60 * 24);
+    years = Math.max(daysDiff / 365.25, 0.25);
+    periodLabel = `${earliest.toLocaleDateString('en-GB')} to ${latest.toLocaleDateString('en-GB')}`;
+
+    // Recalculate total for contiguous cluster only
+    totalCharged = 0;
+    results.summary = { totalCharged: 0, groundMaintenance: 0, managementFees: 0, debtFees: 0, insurance: 0, discounts: 0 };
+    for (const inv of contiguousInvoices) {
+      if (inv.total) totalCharged += inv.total;
+      for (const c of inv.charges) {
+        if (c.isGroundMaintenance && !c.isCredit) results.summary.groundMaintenance += Math.abs(c.yourCost);
+        if (c.isManagementFee && !c.isEbillingDiscount) results.summary.managementFees += c.yourCost;
+        if (c.isInsurance) results.summary.insurance += c.yourCost;
+        if (c.isDebtFee) results.summary.debtFees += c.yourCost;
+        if (c.isCredit || c.isEbillingDiscount) results.summary.discounts += c.yourCost;
+      }
+    }
+    results.summary.totalCharged = totalCharged;
+  }
+
+  const annualCost = totalCharged / years;
+  results.summary.years = years;
+  results.summary.annualCost = annualCost;
+  results.summary.periodLabel = periodLabel;
+  results.summary.clusterSize = contiguousInvoices.length;
+  results.summary.totalInvoices = invoices.length;
+
+  if (annualCost > 150) {
+    results.findings.push({
+      severity: 'HIGH', type: 'cost-excess',
+      title: 'Annual Charges Significantly Exceed Quoted Figure',
+      detail: `Total charges: £${totalCharged.toFixed(2)} over ${years.toFixed(1)} year${years >= 1.5 ? 's' : ''} = £${annualCost.toFixed(2)}/year. The commonly quoted annual charge is approximately £110. Your actual annual cost is ${(annualCost / 110).toFixed(1)}x higher.`
+    });
+  }
+
+  // 5. Ground maintenance increase after correction
+  const gmCharges = invoices.flatMap(inv => inv.charges.filter(c => c.isGroundMaintenance && !c.isCredit));
+  const oldRate = gmCharges.filter(c => c.share === '1/32');
+  const newRate = gmCharges.filter(c => c.share === '1/191');
+  if (oldRate.length > 0 && newRate.length > 0) {
+    const oldQuarterly = oldRate[0].yourCost;
+    const newMonthly = newRate[0].yourCost;
+    const newQuarterly = newMonthly * 3;
+    if (newQuarterly > oldQuarterly) {
+      const increase = ((newQuarterly - oldQuarterly) / oldQuarterly * 100).toFixed(0);
+      results.findings.push({
+        severity: 'MEDIUM', type: 'cost-increase',
+        title: 'Ground Maintenance Costs Increased After "Correction"',
+        detail: `Quarterly ground maintenance went from £${oldQuarterly.toFixed(2)} (1/32) to £${newQuarterly.toFixed(2)} (3 × £${newMonthly.toFixed(2)} at 1/191). That's a ${increase}% increase — a correction should not cost you more.`
+      });
+    }
+  }
+
+  return results;
+}
+
+// ===== MAIN ANALYSIS FLOW =====
+async function analyseAll() {
+  if (!uploadedFiles.length) return;
+
+  const savedName = localStorage.getItem('newton_resident_name');
+  if (!savedName) {
+    document.getElementById('nameModal').classList.remove('hidden');
+    return;
+  }
+  runAnalysis(savedName);
+}
+
+async function confirmName() {
+  const name = document.getElementById('residentName').value.trim();
+  if (!name) return;
+  localStorage.setItem('newton_resident_name', name);
+  document.getElementById('nameModal').classList.add('hidden');
+  runAnalysis(name);
+}
+
+async function runAnalysis(residentName) {
+  const progress = document.getElementById('parseProgress');
+  const fill = document.getElementById('progressFill');
+  progress.classList.remove('hidden');
+
+  parsedInvoices = [];
+  const tbody = document.getElementById('fileListBody');
+
+  const seenNumbers = new Set();
+  for (let i = 0; i < uploadedFiles.length; i++) {
+    fill.style.width = ((i + 1) / uploadedFiles.length * 100) + '%';
+    try {
+      const text = await extractTextFromPDF(uploadedFiles[i]);
+      const invoice = parseNewtonInvoice(text, uploadedFiles[i].name);
+      parsedInvoices.push(invoice);
+      const isDupe = invoice.number !== 'Unknown' && seenNumbers.has(invoice.number);
+      seenNumbers.add(invoice.number);
+      const statusBadge = isDupe
+        ? '<span class="badge badge-orange">Duplicate</span>'
+        : (invoice.charges.length > 0 ? '<span class="badge badge-green">Parsed</span>' : '<span class="badge badge-blue">No charges</span>');
+      tbody.children[i].innerHTML = `<td>${uploadedFiles[i].name}</td><td>${statusBadge}</td><td>${invoice.number}</td><td>${invoice.total ? '£' + invoice.total.toFixed(2) : '-'}</td>`;
+    } catch (err) {
+      tbody.children[i].innerHTML = `<td>${uploadedFiles[i].name}</td><td><span class="badge badge-red">Error</span></td><td>-</td><td>-</td>`;
+    }
+  }
+
+  // Deduplicate by invoice number
+  const seen = new Map();
+  for (const inv of parsedInvoices) {
+    const key = inv.number !== 'Unknown' ? inv.number : inv.filename;
+    if (!seen.has(key) || (inv.charges.length > (seen.get(key).charges.length))) {
+      seen.set(key, inv);
+    }
+  }
+  const uniqueInvoices = [...seen.values()];
+  const dupeCount = parsedInvoices.length - uniqueInvoices.length;
+  if (dupeCount > 0) {
+    console.log(`Deduplicated: ${parsedInvoices.length} → ${uniqueInvoices.length} (removed ${dupeCount} duplicates)`);
+  }
+
+  // Run analysis on deduplicated invoices
+  analysisResults = analyseInvoices(uniqueInvoices);
+  analysisResults.residentName = residentName;
+  analysisResults.accountNumber = parsedInvoices.find(i => i.accountNumber !== 'Unknown')?.accountNumber || 'Unknown';
+  analysisResults.timestamp = new Date().toISOString();
+
+  // Save to community
+  saveToCommunity(analysisResults);
+
+  // Render results
+  renderResults(analysisResults);
+  showTab('results');
+  progress.classList.add('hidden');
+}
+
+// ===== RENDER RESULTS =====
+function renderResults(results) {
+  document.getElementById('noResults').classList.add('hidden');
+  const container = document.getElementById('resultsContent');
+  container.classList.remove('hidden');
+
+  const highFindings = results.findings.filter(f => f.severity === 'HIGH').length;
+  const medFindings = results.findings.filter(f => f.severity === 'MEDIUM').length;
+
+  const yrs = results.summary.years || 1;
+  const annual = results.summary.annualCost || results.summary.totalCharged;
+  const clusterNote = (results.summary.totalInvoices && results.summary.clusterSize && results.summary.clusterSize < results.summary.totalInvoices)
+    ? ` &mdash; using ${results.summary.clusterSize} of ${results.summary.totalInvoices} invoices (older invoices excluded from annual calculation)`
+    : '';
+  const periodInfo = results.summary.periodLabel ? `<p style="color: var(--muted); font-size: 0.8rem; text-align: center; margin-bottom: 12px;">Period: ${results.summary.periodLabel} (${yrs.toFixed(1)} year${yrs >= 1.5 ? 's' : ''})${clusterNote}</p>` : '';
+
+  container.innerHTML = `
+    ${periodInfo}
+    <div class="stats-grid">
+      <div class="stat-card"><div class="value">${results.invoices.length}</div><div class="label">Invoices Analysed</div></div>
+      <div class="stat-card"><div class="value" style="color: var(--red)">${highFindings}</div><div class="label">High Severity Findings</div></div>
+      <div class="stat-card"><div class="value">£${annual.toFixed(0)}</div><div class="label">Annual Cost (vs ~£110 quoted)</div></div>
+      <div class="stat-card"><div class="value">${(annual / 110).toFixed(1)}x</div><div class="label">Over Quoted Rate</div></div>
+    </div>
+
+    <div class="card">
+      <h2>Findings</h2>
+      ${results.findings.length === 0 ? '<p style="color: var(--muted)">No discrepancies detected. This doesn\'t necessarily mean there are none — the tool checks for the most common patterns found in Balfour Park invoices.</p>' : ''}
+      ${results.findings.map(f => `
+        <div class="finding ${f.severity === 'MEDIUM' ? 'warning' : f.severity === 'INFO' ? 'info' : ''}">
+          <h4><span class="badge badge-${f.severity === 'HIGH' ? 'red' : f.severity === 'MEDIUM' ? 'orange' : 'blue'}">${f.severity}</span> ${f.title}</h4>
+          <p>${f.detail}</p>
+        </div>
+      `).join('')}
+    </div>
+
+    <div class="card">
+      <h2>Invoice Breakdown</h2>
+      <table>
+        <thead><tr><th>Invoice #</th><th>Type</th><th>Period</th><th>Charges</th><th>Total</th></tr></thead>
+        <tbody>
+          ${results.invoices.map(inv => `
+            <tr>
+              <td><strong>${inv.number}</strong></td>
+              <td><span class="badge badge-${inv.type === 'invoice' ? 'blue' : 'orange'}">${inv.type}</span></td>
+              <td>${inv.periodFrom || '-'} to ${inv.periodTo || '-'}</td>
+              <td>${inv.charges.length} line items</td>
+              <td><strong>${inv.total ? '£' + inv.total.toFixed(2) : '-'}</strong></td>
+            </tr>
+          `).join('')}
+        </tbody>
+      </table>
+    </div>
+
+    <div class="card">
+      <h2>Cost Summary</h2>
+      <table>
+        <thead><tr><th>Category</th><th>Total (all invoices)</th><th>Per Year</th></tr></thead>
+        <tbody>
+          <tr><td>Ground Maintenance</td><td>£${results.summary.groundMaintenance.toFixed(2)}</td><td>£${(results.summary.groundMaintenance / yrs).toFixed(2)}</td></tr>
+          <tr><td>Management Fees</td><td>£${results.summary.managementFees.toFixed(2)}</td><td>£${(results.summary.managementFees / yrs).toFixed(2)}</td></tr>
+          <tr><td>Insurance</td><td>£${results.summary.insurance.toFixed(2)}</td><td>£${(results.summary.insurance / yrs).toFixed(2)}</td></tr>
+          <tr><td>Debt Collection Fees</td><td style="color: var(--red)">£${results.summary.debtFees.toFixed(2)}</td><td style="color: var(--red)">£${(results.summary.debtFees / yrs).toFixed(2)}</td></tr>
+          <tr><td>Discounts/Credits</td><td style="color: var(--green)">£${results.summary.discounts.toFixed(2)}</td><td style="color: var(--green)">£${(results.summary.discounts / yrs).toFixed(2)}</td></tr>
+          <tr style="font-weight: 700; border-top: 2px solid var(--navy)"><td>Total Invoiced</td><td>£${results.summary.totalCharged.toFixed(2)}</td><td>£${annual.toFixed(2)}</td></tr>
+          <tr style="font-style: italic; color: var(--muted)"><td>Quoted annual charge</td><td></td><td>~£110.00</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="card">
+      <h2>What To Do Next</h2>
+      <div class="finding info">
+        <h4>1. Share this tool with your neighbours</h4>
+        <p>The more residents who can demonstrate the same discrepancies, the stronger the collective case. Export your data from the Community tab and share it.</p>
+      </div>
+      <div class="finding info">
+        <h4>2. Send a formal complaint</h4>
+        <p>Write to Newton at factor@newtonproperty.co.uk citing Section 7 of the Code of Conduct. Give them 14 days to respond. Reference your findings above.</p>
+      </div>
+      <div class="finding info">
+        <h4>3. Apply to the First-tier Tribunal</h4>
+        <p>If Newton don't resolve it, apply to the Housing and Property Chamber (free, no solicitor needed, ~74% homeowner success rate). Glasgow Tribunals Centre: 0141 302 5900.</p>
+      </div>
+    </div>
+  `;
+}
+
+// ===== COMMUNITY FEATURES =====
+function saveToCommunity(results) {
+  const existing = communityData.findIndex(r => r.accountNumber === results.accountNumber);
+  const entry = {
+    residentName: results.residentName,
+    accountNumber: results.accountNumber,
+    invoiceCount: results.invoices.length,
+    totalCharged: results.summary.totalCharged,
+    annualCost: results.summary.annualCost || results.summary.totalCharged,
+    years: results.summary.years || 1,
+    periodLabel: results.summary.periodLabel || '',
+    findings: results.findings,
+    summary: results.summary,
+    timestamp: results.timestamp
+  };
+  if (existing >= 0) communityData[existing] = entry;
+  else communityData.push(entry);
+  localStorage.setItem('newton_community', JSON.stringify(communityData));
+}
+
+function refreshCommunity() {
+  communityData = JSON.parse(localStorage.getItem('newton_community') || '[]');
+  document.getElementById('commResidents').textContent = communityData.length;
+  document.getElementById('commInvoices').textContent = communityData.reduce((s, r) => s + r.invoiceCount, 0);
+  document.getElementById('commFindings').textContent = communityData.reduce((s, r) => s + r.findings.length, 0);
+  const avgAnnual = communityData.length > 0
+    ? '£' + (communityData.reduce((s, r) => s + (r.annualCost || r.totalCharged), 0) / communityData.length).toFixed(0)
+    : '-';
+  document.getElementById('commAvgAnnual').textContent = avgAnnual;
+
+  const list = document.getElementById('residentsList');
+  if (communityData.length === 0) {
+    list.innerHTML = '<div class="empty-state"><div class="icon">👥</div><p>No residents yet.</p></div>';
+  } else {
+    list.innerHTML = communityData.map(r => `
+      <div class="resident-row">
+        <div class="name">${r.residentName}</div>
+        <div><span class="badge badge-blue">${r.invoiceCount} inv / ${(r.years || 1).toFixed(1)}yr</span></div>
+        <div><span class="badge badge-${r.findings.length > 0 ? 'red' : 'green'}">${r.findings.length} findings</span></div>
+        <div class="amount">£${(r.annualCost || r.totalCharged).toFixed(0)}/yr</div>
+      </div>
+    `).join('');
+  }
+
+  const findingsDiv = document.getElementById('commonFindings');
+  if (communityData.length < 2) {
+    findingsDiv.innerHTML = '<p style="color: var(--muted); font-size: 0.85rem;">Need at least 2 residents to compare findings.</p>';
+    return;
+  }
+
+  const findingTypes = {};
+  for (const r of communityData) {
+    for (const f of r.findings) {
+      if (!findingTypes[f.type]) findingTypes[f.type] = { ...f, residents: [] };
+      findingTypes[f.type].residents.push(r.residentName);
+    }
+  }
+  findingsDiv.innerHTML = Object.values(findingTypes).map(f => `
+    <div class="finding ${f.severity === 'MEDIUM' ? 'warning' : ''}">
+      <h4><span class="badge badge-${f.severity === 'HIGH' ? 'red' : 'orange'}">${f.severity}</span> ${f.title}</h4>
+      <p>Reported by ${f.residents.length} of ${communityData.length} residents: ${f.residents.join(', ')}</p>
+    </div>
+  `).join('');
+}
+
+function exportMyData() {
+  if (!analysisResults) { alert('Analyse your invoices first.'); return; }
+  const data = communityData.find(r => r.accountNumber === analysisResults.accountNumber);
+  if (!data) return;
+  const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a'); a.href = url; a.download = `newton_data_${data.accountNumber}.json`; a.click();
+  URL.revokeObjectURL(url);
+}
+
+function importData(file) {
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    try {
+      const data = JSON.parse(e.target.result);
+      if (!data.accountNumber || !data.residentName) { alert('Invalid data file.'); return; }
+      const existing = communityData.findIndex(r => r.accountNumber === data.accountNumber);
+      if (existing >= 0) communityData[existing] = data;
+      else communityData.push(data);
+      localStorage.setItem('newton_community', JSON.stringify(communityData));
+      refreshCommunity();
+      alert(`Imported data for ${data.residentName}.`);
+    } catch (err) { alert('Could not parse the file. Please check it\'s a valid export.'); }
+  };
+  reader.readAsText(file);
+}
+
+function exportCommunityReport() {
+  if (communityData.length === 0) { alert('No community data yet.'); return; }
+  let report = `NEWTON PROPERTY MANAGEMENT — COMMUNITY BILLING REPORT\n`;
+  report += `Balfour Park, Newcraighall, Edinburgh\n`;
+  report += `Generated: ${new Date().toLocaleDateString('en-GB')}\n`;
+  report += `${'='.repeat(60)}\n\n`;
+  report += `SUMMARY\n`;
+  report += `Residents submitted: ${communityData.length}\n`;
+  report += `Total invoices analysed: ${communityData.reduce((s, r) => s + r.invoiceCount, 0)}\n`;
+  report += `Total findings: ${communityData.reduce((s, r) => s + r.findings.length, 0)}\n`;
+  report += `Average annual cost: £${(communityData.reduce((s, r) => s + r.totalCharged, 0) / communityData.length).toFixed(2)}\n\n`;
+  report += `${'='.repeat(60)}\n\n`;
+  report += `INDIVIDUAL REPORTS\n\n`;
+  for (const r of communityData) {
+    report += `${r.residentName} (Account: ${r.accountNumber})\n`;
+    report += `  Invoices: ${r.invoiceCount} | Total charged: £${r.totalCharged.toFixed(2)}\n`;
+    report += `  Findings: ${r.findings.length}\n`;
+    for (const f of r.findings) {
+      report += `    [${f.severity}] ${f.title}\n`;
+      report += `    ${f.detail}\n\n`;
+    }
+    report += `${'-'.repeat(40)}\n`;
+  }
+  report += `\nCOMMON FINDINGS\n\n`;
+  const findingTypes = {};
+  for (const r of communityData) {
+    for (const f of r.findings) {
+      if (!findingTypes[f.type]) findingTypes[f.type] = { ...f, residents: [] };
+      findingTypes[f.type].residents.push(r.residentName);
+    }
+  }
+  for (const f of Object.values(findingTypes)) {
+    report += `[${f.severity}] ${f.title}\n`;
+    report += `Reported by ${f.residents.length}/${communityData.length} residents: ${f.residents.join(', ')}\n\n`;
+  }
+
+  const blob = new Blob([report], { type: 'text/plain' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a'); a.href = url; a.download = `Newton_Community_Report_${new Date().toISOString().split('T')[0]}.txt`; a.click();
+  URL.revokeObjectURL(url);
+}
+</script>
+</body>
+</html>
