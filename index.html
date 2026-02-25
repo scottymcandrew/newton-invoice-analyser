@@ -1,928 +1,1424 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="theme-color" content="#09090b">
-<title>Newton Invoice Analyser — Balfour Park</title>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
-<style>
-/* === FOUNDATION & INTENTIONAL MINIMALISM === */
-:root {
-  --bg: #ffffff;
-  --surface: #fafafa;
-  --surface-hover: #f4f4f5;
-  --text: #09090b;
-  --text-muted: #71717a;
-  --border: #09090b;
-  --border-light: #e4e4e7;
-  
-  --high-bg: #fef2f2;
-  --high-text: #7f1d1d;
-  --high-border: #dc2626;
-  --high-accent: #ef4444;
-  
-  --med-bg: #fffbf0;
-  --med-text: #78350f;
-  --med-border: #d97706;
-  --med-accent: #f59e0b;
-  
-  --info-bg: #ffffff;
-  --info-text: #09090b;
-  --info-border: #09090b;
-  --info-accent: #09090b;
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#09090b">
+  <title>Newton Invoice Analyser — Balfour Park</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+  <style>
+    /* === FOUNDATION & INTENTIONAL MINIMALISM === */
+    :root {
+      --bg: #ffffff;
+      --surface: #fafafa;
+      --surface-hover: #f4f4f5;
+      --text: #09090b;
+      --text-muted: #71717a;
+      --border: #09090b;
+      --border-light: #e4e4e7;
 
-  --success-bg: #f0fdf4;
-  --success-text: #14532d;
-  --success-border: #16a34a;
-  
-  --font-sans: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-  --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
-}
+      --high-bg: #fef2f2;
+      --high-text: #7f1d1d;
+      --high-border: #dc2626;
+      --high-accent: #ef4444;
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --bg: #09090b;
-    --surface: #18181b;
-    --surface-hover: #27272a;
-    --text: #fafafa;
-    --text-muted: #a1a1aa;
-    --border: #fafafa;
-    --border-light: #27272a;
-    
-    --high-bg: #450a0a;
-    --high-text: #fecaca;
-    --high-border: #ef4444;
-    --high-accent: #f87171;
+      --med-bg: #fffbf0;
+      --med-text: #78350f;
+      --med-border: #d97706;
+      --med-accent: #f59e0b;
 
-    --med-bg: #451a03;
-    --med-text: #fde68a;
-    --med-border: #f59e0b;
-    --med-accent: #fbbf24;
+      --info-bg: #ffffff;
+      --info-text: #09090b;
+      --info-border: #09090b;
+      --info-accent: #09090b;
 
-    --info-bg: #09090b;
-    --info-text: #fafafa;
-    --info-border: #fafafa;
-    --info-accent: #fafafa;
+      --success-bg: #f0fdf4;
+      --success-text: #14532d;
+      --success-border: #16a34a;
 
-    --success-bg: #052e16;
-    --success-text: #bbf7d0;
-    --success-border: #22c55e;
-  }
-}
+      --font-sans: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+    }
 
-* { box-sizing: border-box; margin: 0; padding: 0; }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #09090b;
+        --surface: #18181b;
+        --surface-hover: #27272a;
+        --text: #fafafa;
+        --text-muted: #a1a1aa;
+        --border: #fafafa;
+        --border-light: #27272a;
 
-body { 
-  font-family: var(--font-sans);
-  background: var(--bg); 
-  color: var(--text); 
-  line-height: 1.6; 
-  -webkit-font-smoothing: antialiased;
-}
+        --high-bg: #450a0a;
+        --high-text: #fecaca;
+        --high-border: #ef4444;
+        --high-accent: #f87171;
 
-h1, h2, h3, h4, th { 
-  font-weight: 700; 
-  letter-spacing: -0.025em; 
-  text-transform: uppercase;
-}
+        --med-bg: #451a03;
+        --med-text: #fde68a;
+        --med-border: #f59e0b;
+        --med-accent: #fbbf24;
 
-/* === LAYOUT === */
-#app-wrapper {
-  display: flex;
-  min-height: 100vh;
-  flex-direction: column;
-}
+        --info-bg: #09090b;
+        --info-text: #fafafa;
+        --info-border: #fafafa;
+        --info-accent: #fafafa;
 
-header {
-  border-bottom: 2px solid var(--border);
-  background: var(--bg);
-  position: sticky;
-  top: 0;
-  z-index: 50;
-}
+        --success-bg: #052e16;
+        --success-text: #bbf7d0;
+        --success-border: #22c55e;
+      }
+    }
 
-.container { 
-  max-width: 1024px; 
-  margin: 0 auto; 
-  padding: 0 24px; 
-}
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
 
-.header-inner {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-end;
-  padding: 40px 0 0 0;
-  gap: 32px;
-}
+    body {
+      font-family: var(--font-sans);
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.6;
+      -webkit-font-smoothing: antialiased;
+    }
 
-@media (max-width: 768px) {
-  .header-inner { flex-direction: column; align-items: flex-start; padding-top: 32px; gap: 16px; }
-}
+    h1,
+    h2,
+    h3,
+    h4,
+    th {
+      font-weight: 700;
+      letter-spacing: -0.025em;
+      text-transform: uppercase;
+    }
 
-.brand h1 { font-size: 1.75rem; font-weight: 900; letter-spacing: -0.05em; line-height: 1.1; }
-.brand p { color: var(--text-muted); font-size: 0.875rem; font-family: var(--font-mono); margin-top: 8px; text-transform: uppercase; }
+    /* === LAYOUT === */
+    #app-wrapper {
+      display: flex;
+      min-height: 100vh;
+      flex-direction: column;
+    }
 
-/* === NAVIGATION === */
-.tab-bar { 
-  display: flex; 
-  gap: 24px;
-  overflow-x: auto;
-  min-width: 100%;
-}
-.tab-btn { 
-  background: transparent; 
-  color: var(--text-muted); 
-  border: none; 
-  padding: 12px 0 12px 0;
-  cursor: pointer; 
-  font-size: 0.875rem; 
-  font-weight: 600; 
-  text-transform: uppercase;
-  transition: all 0.2s; 
-  border-bottom: 3px solid transparent;
-  white-space: nowrap;
-}
-.tab-btn:hover { color: var(--text); }
-.tab-btn.active { color: var(--text); border-bottom-color: var(--text); }
+    header {
+      border-bottom: 2px solid var(--border);
+      background: var(--bg);
+      position: sticky;
+      top: 0;
+      z-index: 50;
+    }
 
-/* === CONTENT PANELS === */
-main {
-  padding: 48px 0;
-  flex: 1;
-}
+    .container {
+      max-width: 1024px;
+      margin: 0 auto;
+      padding: 0 24px;
+    }
 
-.tab-content { display: none; animation: fadeIn 0.3s ease; }
-.tab-content.active { display: block; }
+    .header-inner {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      padding: 40px 0 0 0;
+      gap: 32px;
+    }
 
-@keyframes fadeIn {
-  from { opacity: 0; transform: translateY(4px); }
-  to { opacity: 1; transform: translateY(0); }
-}
+    @media (max-width: 768px) {
+      .header-inner {
+        flex-direction: column;
+        align-items: flex-start;
+        padding-top: 32px;
+        gap: 16px;
+      }
+    }
 
-.card { 
-  border: 1px solid var(--border-light); 
-  background: var(--surface); 
-  padding: 32px; 
-  margin-bottom: 32px;
-}
-.card > h2 { font-size: 1.25rem; margin-bottom: 12px; border-bottom: 1px solid var(--border-light); padding-bottom: 12px; }
-.card > p { color: var(--text-muted); font-size: 0.9rem; margin-bottom: 24px; max-width: 700px; }
-.card h3 { font-size: 1rem; margin: 32px 0 16px; }
+    .brand h1 {
+      font-size: 1.75rem;
+      font-weight: 900;
+      letter-spacing: -0.05em;
+      line-height: 1.1;
+    }
 
-/* === UPLOAD INTERFACE === */
-.graphic-banner {
-  width: 100%;
-  height: 200px;
-  background-image: url('newton_graphic.png');
-  background-size: cover;
-  background-position: center;
-  border: 1px solid var(--border-light);
-  margin-bottom: 24px;
-  filter: grayscale(100%) contrast(1.2) brightness(0.6);
-  position: relative;
-}
-.graphic-banner::after {
-  content: '';
-  position: absolute; inset: 0;
-  background: linear-gradient(to top, var(--surface) 0%, transparent 100%);
-}
+    .brand p {
+      color: var(--text-muted);
+      font-size: 0.875rem;
+      font-family: var(--font-mono);
+      margin-top: 8px;
+      text-transform: uppercase;
+    }
 
-.drop-zone { 
-  border: 2px dashed var(--border-light); 
-  background: var(--bg);
-  padding: 64px 24px; 
-  text-align: center; 
-  cursor: pointer; 
-  transition: all 0.2s; 
-}
-.drop-zone:hover, .drop-zone.drag-over { 
-  border-color: var(--text); 
-  background: var(--surface-hover); 
-}
-.drop-zone .big { font-size: 2.5rem; margin-bottom: 16px; opacity: 0.8; }
-.drop-zone p { color: var(--text); font-weight: 600; font-size: 1.1rem; }
-.drop-zone span { color: var(--text-muted); font-size: 0.875rem; display: block; margin-top: 8px; font-family: var(--font-mono); }
+    /* === NAVIGATION === */
+    .tab-bar {
+      display: flex;
+      gap: 24px;
+      overflow-x: auto;
+      min-width: 100%;
+    }
 
-/* === BUTTONS === */
-.btn { 
-  display: inline-flex; align-items: center; justify-content: center;
-  padding: 10px 20px; 
-  border: 1px solid transparent;
-  cursor: pointer; 
-  font-size: 0.875rem; 
-  font-weight: 600; 
-  text-transform: uppercase;
-  transition: all 0.2s; 
-  font-family: inherit;
-}
-.btn-primary { background: var(--text); color: var(--bg); }
-.btn-primary:hover { opacity: 0.9; transform: translateY(-1px); }
-.btn-outline { background: transparent; border-color: var(--border-light); color: var(--text); }
-.btn-outline:hover { background: var(--surface-hover); border-color: var(--text); }
-.btn-danger { background: var(--high-accent); color: var(--bg); }
-.btn-green { background: var(--success-border); color: var(--bg); }
-.btn-sm { padding: 4px 10px; font-size: 0.75rem; }
+    .tab-btn {
+      background: transparent;
+      color: var(--text-muted);
+      border: none;
+      padding: 12px 0 12px 0;
+      cursor: pointer;
+      font-size: 0.875rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      transition: all 0.2s;
+      border-bottom: 3px solid transparent;
+      white-space: nowrap;
+    }
 
-/* === TABLES === */
-table { width: 100%; border-collapse: collapse; font-size: 0.875rem; text-align: left; margin-top: 16px; }
-th { color: var(--text-muted); font-weight: 600; padding: 12px 16px; border-bottom: 2px solid var(--border-light); font-size: 0.75rem; font-family: var(--font-mono); }
-td { padding: 16px; border-bottom: 1px solid var(--border-light); vertical-align: top; }
-tr:last-child td { border-bottom: none; }
-tr:hover td { background: var(--surface-hover); }
+    .tab-btn:hover {
+      color: var(--text);
+    }
 
-/* MOBILE TABLES via Nth-Child */
-@media (max-width: 768px) {
-  table, thead, tbody, th, td, tr { display: block; }
-  thead tr { position: absolute; top: -9999px; left: -9999px; }
-  tr { border: 1px solid var(--border-light); margin-bottom: 16px; background: var(--bg); }
-  td { border: none; border-bottom: 1px solid var(--border-light); position: relative; padding-left: 45%; text-align: right; }
-  td:last-child { border-bottom: none; }
-  
-  td::before {
-    position: absolute; left: 16px; width: 40%; text-align: left;
-    font-weight: 600; text-transform: uppercase; color: var(--text-muted); font-size: 0.75rem; font-family: var(--font-mono);
-  }
-  
-  /* Uploads Table */
-  #fileListBody td:nth-child(1)::before { content: "File"; }
-  #fileListBody td:nth-child(2)::before { content: "Status"; }
-  #fileListBody td:nth-child(3)::before { content: "Invoice #"; }
-  #fileListBody td:nth-child(4)::before { content: "Total"; }
-  
-  /* Invoices Table */
-  #resultsContent table:nth-of-type(1) td:nth-child(1)::before { content: "Invoice #"; }
-  #resultsContent table:nth-of-type(1) td:nth-child(2)::before { content: "Type"; }
-  #resultsContent table:nth-of-type(1) td:nth-child(3)::before { content: "Period"; }
-  #resultsContent table:nth-of-type(1) td:nth-child(4)::before { content: "Charges"; }
-  #resultsContent table:nth-of-type(1) td:nth-child(5)::before { content: "Total"; }
+    .tab-btn.active {
+      color: var(--text);
+      border-bottom-color: var(--text);
+    }
 
-  /* Cost Summary */
-  #resultsContent table:nth-of-type(2) td:nth-child(1)::before { content: "Category"; }
-  #resultsContent table:nth-of-type(2) td:nth-child(2)::before { content: "Total"; }
-  #resultsContent table:nth-of-type(2) td:nth-child(3)::before { content: "Per Year"; }
-}
+    /* === CONTENT PANELS === */
+    main {
+      padding: 48px 0;
+      flex: 1;
+    }
 
-/* === BADGES === */
-.badge { 
-  display: inline-flex; align-items: center; padding: 4px 8px; 
-  font-size: 0.75rem; font-weight: 700; font-family: var(--font-mono); text-transform: uppercase;
-  border: 1px solid transparent; letter-spacing: 0.05em;
-}
-.badge-red { background: var(--high-bg); color: var(--high-accent); border-color: var(--high-border); }
-.badge-orange { background: var(--med-bg); color: var(--med-accent); border-color: var(--med-border); }
-.badge-green { background: var(--success-bg); color: var(--success-border); border-color: var(--success-border); }
-.badge-blue { background: var(--info-bg); color: var(--info-text); border-color: var(--info-border); }
+    .tab-content {
+      display: none;
+      animation: fadeIn 0.3s ease;
+    }
 
-/* === FINDINGS OVERRIDE === */
-.finding { 
-  padding: 24px 24px 24px 64px; 
-  margin: 16px 0; 
-  border: 2px solid var(--high-border); 
-  background: var(--high-bg); 
-  color: var(--high-text);
-  position: relative;
-}
-.finding::before {
-  content: "⚠";
-  position: absolute; top: 0; left: 0; bottom: 0;
-  width: 48px; background: var(--high-border); color: var(--bg);
-  display: flex; align-items: center; justify-content: center;
-  font-size: 1.5rem; font-weight: bold;
-}
-.finding.warning { 
-  border-color: var(--med-border); background: var(--med-bg); color: var(--med-text); 
-}
-.finding.warning::before {
-  background: var(--med-border); content: "!"; color: var(--bg);
-}
-.finding.info { 
-  border-color: var(--info-border); background: var(--info-bg); color: var(--info-text); padding-left: 24px; border-width: 1px;
-}
-.finding.info::before { display: none; }
+    .tab-content.active {
+      display: block;
+    }
 
-.finding h4 { font-size: 1.125rem; margin-bottom: 8px; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
-.finding h4 .badge { border: none; background: transparent; padding: 0; font-size: 0.875rem; }
-.finding.warning h4 .badge, .finding.info h4 .badge, .finding h4 .badge { color: inherit; }
-.finding p { font-size: 0.875rem; opacity: 0.9; line-height: 1.6; }
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+        transform: translateY(4px);
+      }
 
-/* === STATS GRID === */
-.stats-grid { 
-  display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 32px; 
-}
-.stat-card { 
-  border: 1px solid var(--border-light); background: var(--bg); padding: 24px; 
-  display: flex; flex-direction: column; justify-content: center;
-}
-.stat-card .value { font-size: 3rem; font-weight: 300; letter-spacing: -0.05em; line-height: 1; margin-bottom: 8px; color: var(--text); }
-.stat-card .label { font-size: 0.75rem; text-transform: uppercase; font-weight: 700; color: var(--text-muted); font-family: var(--font-mono); letter-spacing: 0.05em; }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
 
-/* Results Override for Severity */
-#resultsContent .stats-grid .stat-card:nth-child(2) { border-color: var(--high-border); background: var(--high-bg); }
-#resultsContent .stats-grid .stat-card:nth-child(2) .value { color: var(--high-accent); font-weight: 600; }
-#resultsContent .stats-grid .stat-card:nth-child(2) .label { color: var(--high-text); }
-#resultsContent .stats-grid .stat-card:nth-child(3) .value { font-weight: 600; }
+    .card {
+      border: 1px solid var(--border-light);
+      background: var(--surface);
+      padding: 32px;
+      margin-bottom: 32px;
+    }
 
-/* === PROGRESS === */
-.progress-bar { height: 4px; background: var(--border-light); overflow: hidden; margin: 16px 0; }
-.progress-bar .fill { height: 100%; background: var(--text); transition: width 0.3s; }
+    .card>h2 {
+      font-size: 1.25rem;
+      margin-bottom: 12px;
+      border-bottom: 1px solid var(--border-light);
+      padding-bottom: 12px;
+    }
 
-.hidden { display: none !important; }
+    .card>p {
+      color: var(--text-muted);
+      font-size: 0.9rem;
+      margin-bottom: 24px;
+      max-width: 700px;
+    }
 
-/* === MODAL === */
-#nameModal { 
-  position: fixed; inset: 0; background: rgba(0,0,0,0.8); backdrop-filter: blur(4px);
-  display: flex; align-items: center; justify-content: center; z-index: 100; padding: 24px;
-}
-#nameModal .modal-content { 
-  background: var(--bg); border: 1px solid var(--border-light); padding: 40px; 
-  width: 100%; max-width: 480px; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
-}
-#nameModal h2 { font-size: 1.5rem; margin-bottom: 12px; }
-#nameModal input { 
-  width: 100%; padding: 12px; border: 1px solid var(--border-light); background: var(--surface); color: var(--text);
-  font-size: 1rem; margin: 24px 0; outline: none; transition: border-color 0.2s;
-  font-family: inherit;
-}
-#nameModal input:focus { border-color: var(--text); }
-#nameModal .note { font-size: 0.875rem; color: var(--text-muted); }
+    .card h3 {
+      font-size: 1rem;
+      margin: 32px 0 16px;
+    }
 
-/* === EMPTY STATE === */
-.empty-state { text-align: center; padding: 64px 24px; }
-.empty-state .icon { font-size: 2.5rem; margin-bottom: 16px; opacity: 0.3; filter: grayscale(1); }
-.empty-state p { color: var(--text-muted); font-size: 0.875rem; max-width: 400px; margin: 0 auto; }
+    /* === UPLOAD INTERFACE === */
+    .graphic-banner {
+      width: 100%;
+      height: 280px;
+      background-image: url('newton_graphic.png');
+      background-size: cover;
+      background-position: center;
+      border: 1px solid var(--border-light);
+      margin-bottom: 32px;
+      position: relative;
+    }
 
-/* === COMMUNITY LIST === */
-.resident-row { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 16px; border-bottom: 1px solid var(--border-light); flex-wrap: wrap; }
-.resident-row:last-child { border-bottom: none; }
-.resident-row .name { font-weight: 600; flex: 1; min-width: 120px; text-transform: uppercase; font-size: 0.875rem;}
-.resident-row .amount { font-family: var(--font-mono); font-weight: 600; text-align: right; }
+    @media (prefers-color-scheme: dark) {
+      .graphic-banner {
+        filter: brightness(0.9) contrast(1.05);
+      }
+    }
 
-/* === PRINT STYLES === */
-@media print {
-  body { background: white !important; color: black !important; font-size: 11pt; }
-  header, .tab-bar, .card, .stat-card, .finding { border: none !important; box-shadow: none !important; background: transparent !important; color: black !important; }
-  header, .btn, .tab-bar, .graphic-banner { display: none !important; }
-  #tab-results { display: block !important; }
-  .finding { border: 1px solid black !important; border-left: 4px solid black !important; padding: 16px !important; margin: 12px 0 !important; }
-  .finding::before { display: none !important; }
-  .badge { border: 1px solid black !important; color: black !important; }
-  table th { border-bottom: 2px solid black !important; color: black !important; }
-  table td { border-bottom: 1px solid #ccc !important; }
-  .stats-grid { display: grid !important; grid-template-columns: repeat(4, 1fr) !important; margin-bottom: 24px; gap: 16px; }
-  .stat-card { border: 1px solid black !important; padding: 16px !important; }
-  @page { margin: 1.5cm; }
-}
-</style>
+    .graphic-banner::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(to top, var(--surface) 0%, transparent 70%);
+    }
+
+    .drop-zone {
+      border: 2px dashed var(--border-light);
+      background: var(--bg);
+      padding: 64px 24px;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .drop-zone:hover,
+    .drop-zone.drag-over {
+      border-color: var(--text);
+      background: var(--surface-hover);
+    }
+
+    .drop-zone .big {
+      font-size: 2.5rem;
+      margin-bottom: 16px;
+      opacity: 0.8;
+    }
+
+    .drop-zone p {
+      color: var(--text);
+      font-weight: 600;
+      font-size: 1.1rem;
+    }
+
+    .drop-zone span {
+      color: var(--text-muted);
+      font-size: 0.875rem;
+      display: block;
+      margin-top: 8px;
+      font-family: var(--font-mono);
+    }
+
+    /* === BUTTONS === */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 10px 20px;
+      border: 1px solid transparent;
+      cursor: pointer;
+      font-size: 0.875rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      transition: all 0.2s;
+      font-family: inherit;
+    }
+
+    .btn-primary {
+      background: var(--text);
+      color: var(--bg);
+    }
+
+    .btn-primary:hover {
+      opacity: 0.9;
+      transform: translateY(-1px);
+    }
+
+    .btn-outline {
+      background: transparent;
+      border-color: var(--border-light);
+      color: var(--text);
+    }
+
+    .btn-outline:hover {
+      background: var(--surface-hover);
+      border-color: var(--text);
+    }
+
+    .btn-danger {
+      background: var(--high-accent);
+      color: var(--bg);
+    }
+
+    .btn-green {
+      background: var(--success-border);
+      color: var(--bg);
+    }
+
+    .btn-sm {
+      padding: 4px 10px;
+      font-size: 0.75rem;
+    }
+
+    /* === TABLES === */
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.875rem;
+      text-align: left;
+      margin-top: 16px;
+    }
+
+    th {
+      color: var(--text-muted);
+      font-weight: 600;
+      padding: 12px 16px;
+      border-bottom: 2px solid var(--border-light);
+      font-size: 0.75rem;
+      font-family: var(--font-mono);
+    }
+
+    td {
+      padding: 16px;
+      border-bottom: 1px solid var(--border-light);
+      vertical-align: top;
+    }
+
+    tr:last-child td {
+      border-bottom: none;
+    }
+
+    tr:hover td {
+      background: var(--surface-hover);
+    }
+
+    /* MOBILE TABLES via Nth-Child */
+    @media (max-width: 768px) {
+
+      table,
+      thead,
+      tbody,
+      th,
+      td,
+      tr {
+        display: block;
+      }
+
+      thead tr {
+        position: absolute;
+        top: -9999px;
+        left: -9999px;
+      }
+
+      tr {
+        border: 1px solid var(--border-light);
+        margin-bottom: 16px;
+        background: var(--bg);
+      }
+
+      td {
+        border: none;
+        border-bottom: 1px solid var(--border-light);
+        position: relative;
+        padding-left: 45%;
+        text-align: right;
+      }
+
+      td:last-child {
+        border-bottom: none;
+      }
+
+      td::before {
+        position: absolute;
+        left: 16px;
+        width: 40%;
+        text-align: left;
+        font-weight: 600;
+        text-transform: uppercase;
+        color: var(--text-muted);
+        font-size: 0.75rem;
+        font-family: var(--font-mono);
+      }
+
+      /* Uploads Table */
+      #fileListBody td:nth-child(1)::before {
+        content: "File";
+      }
+
+      #fileListBody td:nth-child(2)::before {
+        content: "Status";
+      }
+
+      #fileListBody td:nth-child(3)::before {
+        content: "Invoice #";
+      }
+
+      #fileListBody td:nth-child(4)::before {
+        content: "Total";
+      }
+
+      /* Invoices Table */
+      #resultsContent table:nth-of-type(1) td:nth-child(1)::before {
+        content: "Invoice #";
+      }
+
+      #resultsContent table:nth-of-type(1) td:nth-child(2)::before {
+        content: "Type";
+      }
+
+      #resultsContent table:nth-of-type(1) td:nth-child(3)::before {
+        content: "Period";
+      }
+
+      #resultsContent table:nth-of-type(1) td:nth-child(4)::before {
+        content: "Charges";
+      }
+
+      #resultsContent table:nth-of-type(1) td:nth-child(5)::before {
+        content: "Total";
+      }
+
+      /* Cost Summary */
+      #resultsContent table:nth-of-type(2) td:nth-child(1)::before {
+        content: "Category";
+      }
+
+      #resultsContent table:nth-of-type(2) td:nth-child(2)::before {
+        content: "Total";
+      }
+
+      #resultsContent table:nth-of-type(2) td:nth-child(3)::before {
+        content: "Per Year";
+      }
+    }
+
+    /* === BADGES === */
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      padding: 4px 8px;
+      font-size: 0.75rem;
+      font-weight: 700;
+      font-family: var(--font-mono);
+      text-transform: uppercase;
+      border: 1px solid transparent;
+      letter-spacing: 0.05em;
+    }
+
+    .badge-red {
+      background: var(--high-bg);
+      color: var(--high-accent);
+      border-color: var(--high-border);
+    }
+
+    .badge-orange {
+      background: var(--med-bg);
+      color: var(--med-accent);
+      border-color: var(--med-border);
+    }
+
+    .badge-green {
+      background: var(--success-bg);
+      color: var(--success-border);
+      border-color: var(--success-border);
+    }
+
+    .badge-blue {
+      background: var(--info-bg);
+      color: var(--info-text);
+      border-color: var(--info-border);
+    }
+
+    /* === FINDINGS OVERRIDE === */
+    .finding {
+      padding: 24px 24px 24px 64px;
+      margin: 16px 0;
+      border: 2px solid var(--high-border);
+      background: var(--high-bg);
+      color: var(--high-text);
+      position: relative;
+    }
+
+    .finding::before {
+      content: "⚠";
+      position: absolute;
+      top: 0;
+      left: 0;
+      bottom: 0;
+      width: 48px;
+      background: var(--high-border);
+      color: var(--bg);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.5rem;
+      font-weight: bold;
+    }
+
+    .finding.warning {
+      border-color: var(--med-border);
+      background: var(--med-bg);
+      color: var(--med-text);
+    }
+
+    .finding.warning::before {
+      background: var(--med-border);
+      content: "!";
+      color: var(--bg);
+    }
+
+    .finding.info {
+      border-color: var(--info-border);
+      background: var(--info-bg);
+      color: var(--info-text);
+      padding-left: 24px;
+      border-width: 1px;
+    }
+
+    .finding.info::before {
+      display: none;
+    }
+
+    .finding h4 {
+      font-size: 1.125rem;
+      margin-bottom: 8px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .finding h4 .badge {
+      border: none;
+      background: transparent;
+      padding: 0;
+      font-size: 0.875rem;
+    }
+
+    .finding.warning h4 .badge,
+    .finding.info h4 .badge,
+    .finding h4 .badge {
+      color: inherit;
+    }
+
+    .finding p {
+      font-size: 0.875rem;
+      opacity: 0.9;
+      line-height: 1.6;
+    }
+
+    /* === STATS GRID === */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 16px;
+      margin-bottom: 32px;
+    }
+
+    .stat-card {
+      border: 1px solid var(--border-light);
+      background: var(--bg);
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+    }
+
+    .stat-card .value {
+      font-size: 3rem;
+      font-weight: 300;
+      letter-spacing: -0.05em;
+      line-height: 1;
+      margin-bottom: 8px;
+      color: var(--text);
+    }
+
+    .stat-card .label {
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      font-weight: 700;
+      color: var(--text-muted);
+      font-family: var(--font-mono);
+      letter-spacing: 0.05em;
+    }
+
+    /* Results Override for Severity */
+    #resultsContent .stats-grid .stat-card:nth-child(2) {
+      border-color: var(--high-border);
+      background: var(--high-bg);
+    }
+
+    #resultsContent .stats-grid .stat-card:nth-child(2) .value {
+      color: var(--high-accent);
+      font-weight: 600;
+    }
+
+    #resultsContent .stats-grid .stat-card:nth-child(2) .label {
+      color: var(--high-text);
+    }
+
+    #resultsContent .stats-grid .stat-card:nth-child(3) .value {
+      font-weight: 600;
+    }
+
+    /* === PROGRESS === */
+    .progress-bar {
+      height: 4px;
+      background: var(--border-light);
+      overflow: hidden;
+      margin: 16px 0;
+    }
+
+    .progress-bar .fill {
+      height: 100%;
+      background: var(--text);
+      transition: width 0.3s;
+    }
+
+    .hidden {
+      display: none !important;
+    }
+
+    /* === MODAL === */
+    #nameModal {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.8);
+      backdrop-filter: blur(4px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 100;
+      padding: 24px;
+    }
+
+    #nameModal .modal-content {
+      background: var(--bg);
+      border: 1px solid var(--border-light);
+      padding: 40px;
+      width: 100%;
+      max-width: 480px;
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+    }
+
+    #nameModal h2 {
+      font-size: 1.5rem;
+      margin-bottom: 12px;
+    }
+
+    #nameModal input {
+      width: 100%;
+      padding: 12px;
+      border: 1px solid var(--border-light);
+      background: var(--surface);
+      color: var(--text);
+      font-size: 1rem;
+      margin: 24px 0;
+      outline: none;
+      transition: border-color 0.2s;
+      font-family: inherit;
+    }
+
+    #nameModal input:focus {
+      border-color: var(--text);
+    }
+
+    #nameModal .note {
+      font-size: 0.875rem;
+      color: var(--text-muted);
+    }
+
+    /* === EMPTY STATE === */
+    .empty-state {
+      text-align: center;
+      padding: 64px 24px;
+    }
+
+    .empty-state .icon {
+      font-size: 2.5rem;
+      margin-bottom: 16px;
+      opacity: 0.3;
+      filter: grayscale(1);
+    }
+
+    .empty-state p {
+      color: var(--text-muted);
+      font-size: 0.875rem;
+      max-width: 400px;
+      margin: 0 auto;
+    }
+
+    /* === COMMUNITY LIST === */
+    .resident-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      padding: 16px;
+      border-bottom: 1px solid var(--border-light);
+      flex-wrap: wrap;
+    }
+
+    .resident-row:last-child {
+      border-bottom: none;
+    }
+
+    .resident-row .name {
+      font-weight: 600;
+      flex: 1;
+      min-width: 120px;
+      text-transform: uppercase;
+      font-size: 0.875rem;
+    }
+
+    .resident-row .amount {
+      font-family: var(--font-mono);
+      font-weight: 600;
+      text-align: right;
+    }
+
+    /* === PRINT STYLES === */
+    @media print {
+      body {
+        background: white !important;
+        color: black !important;
+        font-size: 11pt;
+      }
+
+      header,
+      .tab-bar,
+      .card,
+      .stat-card,
+      .finding {
+        border: none !important;
+        box-shadow: none !important;
+        background: transparent !important;
+        color: black !important;
+      }
+
+      header,
+      .btn,
+      .tab-bar,
+      .graphic-banner {
+        display: none !important;
+      }
+
+      #tab-results {
+        display: block !important;
+      }
+
+      .finding {
+        border: 1px solid black !important;
+        border-left: 4px solid black !important;
+        padding: 16px !important;
+        margin: 12px 0 !important;
+      }
+
+      .finding::before {
+        display: none !important;
+      }
+
+      .badge {
+        border: 1px solid black !important;
+        color: black !important;
+      }
+
+      table th {
+        border-bottom: 2px solid black !important;
+        color: black !important;
+      }
+
+      table td {
+        border-bottom: 1px solid #ccc !important;
+      }
+
+      .stats-grid {
+        display: grid !important;
+        grid-template-columns: repeat(4, 1fr) !important;
+        margin-bottom: 24px;
+        gap: 16px;
+      }
+
+      .stat-card {
+        border: 1px solid black !important;
+        padding: 16px !important;
+      }
+
+      @page {
+        margin: 1.5cm;
+      }
+    }
+  </style>
 </head>
+
 <body>
 
-<div id="app-wrapper">
-  <header>
-    <div class="container header-inner">
-      <div class="brand">
-        <h1>Newton Invoice Analyser</h1>
-        <p>Balfour Park Residents — Billing Discrepancy Tool</p>
-      </div>
-      <div class="tab-bar">
-        <button class="tab-btn active" onclick="showTab('upload')">Upload Engine</button>
-        <button class="tab-btn" onclick="showTab('results')">Financial Ledger</button>
-        <button class="tab-btn" onclick="showTab('community')">Community Data</button>
-      </div>
-    </div>
-  </header>
-
-  <main class="container">
-    
-    <!-- UPLOAD TAB -->
-    <div id="tab-upload" class="tab-content active">
-      <div class="card">
-        <div class="graphic-banner"></div>
-        <h2>Data Extraction Protocol</h2>
-        <p>
-          Drop your Newton Property Management PDF invoices below. This tool locally parses the documents in your browser, extracting billing anomalies and identifying potential overcharges. Zero data is sent to the cloud.
-        </p>
-        
-        <div class="drop-zone" id="dropZone" onclick="document.getElementById('fileInput').click()">
-          <div class="big">📄</div>
-          <p>Drop PDF invoices here or click to select</p>
-          <span>Accepts common charge invoices & outstanding balance notices</span>
+  <div id="app-wrapper">
+    <header>
+      <div class="container header-inner">
+        <div class="brand">
+          <h1>Newton Invoice Analyser</h1>
+          <p>Balfour Park Residents — Billing Discrepancy Tool</p>
         </div>
-        <input type="file" id="fileInput" multiple accept=".pdf" style="display:none" onchange="handleFiles(this.files)">
+        <div class="tab-bar">
+          <button class="tab-btn active" onclick="showTab('upload')">Upload Engine</button>
+          <button class="tab-btn" onclick="showTab('results')">Financial Ledger</button>
+          <button class="tab-btn" onclick="showTab('community')">Community Data</button>
+        </div>
+      </div>
+    </header>
 
-        <div id="fileList" class="hidden" style="margin-top: 32px;">
-          <h3>Queued Documents</h3>
-          <table>
-            <thead><tr><th>File</th><th>Status</th><th>Invoice #</th><th>Total</th></tr></thead>
-            <tbody id="fileListBody"></tbody>
-          </table>
-          <div style="margin-top: 24px; display: flex; gap: 12px; flex-wrap: wrap;">
-            <button class="btn btn-primary" onclick="analyseAll()">Commence Analysis</button>
-            <button class="btn btn-outline" onclick="clearAll()">Clear Buffer</button>
+    <main class="container">
+
+      <!-- UPLOAD TAB -->
+      <div id="tab-upload" class="tab-content active">
+        <div class="card">
+          <div class="graphic-banner"></div>
+          <h2>Data Extraction Protocol</h2>
+          <p>
+            Drop your Newton Property Management PDF invoices below. This tool locally parses the documents in your
+            browser, extracting billing anomalies and identifying potential overcharges. Zero data is sent to the cloud.
+          </p>
+
+          <div class="drop-zone" id="dropZone" onclick="document.getElementById('fileInput').click()">
+            <div class="big">📄</div>
+            <p>Drop PDF invoices here or click to select</p>
+            <span>Accepts common charge invoices & outstanding balance notices</span>
+          </div>
+          <input type="file" id="fileInput" multiple accept=".pdf" style="display:none"
+            onchange="handleFiles(this.files)">
+
+          <div id="fileList" class="hidden" style="margin-top: 32px;">
+            <h3>Queued Documents</h3>
+            <table>
+              <thead>
+                <tr>
+                  <th>File</th>
+                  <th>Status</th>
+                  <th>Invoice #</th>
+                  <th>Total</th>
+                </tr>
+              </thead>
+              <tbody id="fileListBody"></tbody>
+            </table>
+            <div style="margin-top: 24px; display: flex; gap: 12px; flex-wrap: wrap;">
+              <button class="btn btn-primary" onclick="analyseAll()">Commence Analysis</button>
+              <button class="btn btn-outline" onclick="clearAll()">Clear Buffer</button>
+            </div>
+          </div>
+
+          <div id="parseProgress" class="hidden" style="margin-top: 32px;">
+            <p style="font-size: 0.875rem; font-family: var(--font-mono); font-weight: 600; text-transform: uppercase;">
+              Crunching Document Matrices...</p>
+            <div class="progress-bar">
+              <div class="fill" id="progressFill" style="width: 0%"></div>
+            </div>
           </div>
         </div>
 
-        <div id="parseProgress" class="hidden" style="margin-top: 32px;">
-          <p style="font-size: 0.875rem; font-family: var(--font-mono); font-weight: 600; text-transform: uppercase;">Crunching Document Matrices...</p>
-          <div class="progress-bar"><div class="fill" id="progressFill" style="width: 0%"></div></div>
+        <div class="card">
+          <h2>What The Engine Detects</h2>
+          <div
+            style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px; margin-top: 24px;">
+            <div style="display: flex; align-items: center; gap: 12px; font-size: 0.875rem;"><span
+                class="badge badge-red">HIGH</span> Duplicate entries across invoices</div>
+            <div style="display: flex; align-items: center; gap: 12px; font-size: 0.875rem;"><span
+                class="badge badge-red">HIGH</span> Malicious debt collection fees</div>
+            <div style="display: flex; align-items: center; gap: 12px; font-size: 0.875rem;"><span
+                class="badge badge-orange">MEDIUM</span> Covert share ratio adjustments</div>
+            <div style="display: flex; align-items: center; gap: 12px; font-size: 0.875rem;"><span
+                class="badge badge-orange">MEDIUM</span> Costs inflated after "corrections"</div>
+            <div style="display: flex; align-items: center; gap: 12px; font-size: 0.875rem;"><span
+                class="badge badge-blue">INFO</span> Annual cost divergence from quote</div>
+            <div style="display: flex; align-items: center; gap: 12px; font-size: 0.875rem;"><span
+                class="badge badge-blue">INFO</span> Improper demands during dispute</div>
+          </div>
         </div>
       </div>
 
-      <div class="card">
-        <h2>What The Engine Detects</h2>
-        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px; margin-top: 24px;">
-          <div style="display: flex; align-items: center; gap: 12px; font-size: 0.875rem;"><span class="badge badge-red">HIGH</span> Duplicate entries across invoices</div>
-          <div style="display: flex; align-items: center; gap: 12px; font-size: 0.875rem;"><span class="badge badge-red">HIGH</span> Malicious debt collection fees</div>
-          <div style="display: flex; align-items: center; gap: 12px; font-size: 0.875rem;"><span class="badge badge-orange">MEDIUM</span> Covert share ratio adjustments</div>
-          <div style="display: flex; align-items: center; gap: 12px; font-size: 0.875rem;"><span class="badge badge-orange">MEDIUM</span> Costs inflated after "corrections"</div>
-          <div style="display: flex; align-items: center; gap: 12px; font-size: 0.875rem;"><span class="badge badge-blue">INFO</span> Annual cost divergence from quote</div>
-          <div style="display: flex; align-items: center; gap: 12px; font-size: 0.875rem;"><span class="badge badge-blue">INFO</span> Improper demands during dispute</div>
-        </div>
-      </div>
-    </div>
-
-    <!-- RESULTS TAB -->
-    <div id="tab-results" class="tab-content">
-      <div id="noResults" class="card">
-        <div class="empty-state">
-          <div class="icon">▤</div>
-          <p>The ledger is empty. Supply your Newton PDF invoices to generate the financial discrepancy report.</p>
-        </div>
-      </div>
-      <div id="resultsContent" class="hidden"></div>
-    </div>
-
-    <!-- COMMUNITY TAB -->
-    <div id="tab-community" class="tab-content">
-      <div class="card" style="border-top: 4px solid var(--border);">
-        <h2>Community Intelligence</h2>
-        <p>
-          Isolate systemic overcharging by synthesizing data with your neighbours. Export your local ledger and import peer ledgers to expose broader patterns.
-        </p>
-        <div class="stats-grid" id="communityStats">
-          <div class="stat-card"><div class="value" id="commResidents">0</div><div class="label">Total Residents</div></div>
-          <div class="stat-card"><div class="value" id="commInvoices">0</div><div class="label">Invoices Scanned</div></div>
-          <div class="stat-card"><div class="value" id="commFindings">0</div><div class="label">Anomalies Detected</div></div>
-          <div class="stat-card"><div class="value" id="commAvgAnnual">-</div><div class="label">Mean Annual Cost</div></div>
-        </div>
-
-        <div style="display: flex; gap: 12px; margin-bottom: 8px; flex-wrap: wrap;">
-          <button class="btn btn-primary" onclick="exportMyData()">Export My Ledger</button>
-          <button class="btn btn-outline" onclick="document.getElementById('importInput').click()">Import Peer Ledger</button>
-          <input type="file" id="importInput" accept=".json" style="display:none" onchange="importData(this.files[0])">
-          <button class="btn btn-green" onclick="exportCommunityReport()">Export Global Report</button>
-        </div>
-      </div>
-
-      <div class="card">
-        <h2>Resident Database</h2>
-        <div id="residentsList">
+      <!-- RESULTS TAB -->
+      <div id="tab-results" class="tab-content">
+        <div id="noResults" class="card">
           <div class="empty-state">
-            <div class="icon">☷</div>
-            <p>No resident data present. Run your analysis and import neighbour files to populate this vector.</p>
+            <div class="icon">▤</div>
+            <p>The ledger is empty. Supply your Newton PDF invoices to generate the financial discrepancy report.</p>
+          </div>
+        </div>
+        <div id="resultsContent" class="hidden"></div>
+      </div>
+
+      <!-- COMMUNITY TAB -->
+      <div id="tab-community" class="tab-content">
+        <div class="card" style="border-top: 4px solid var(--border);">
+          <h2>Community Intelligence</h2>
+          <p>
+            Isolate systemic overcharging by synthesizing data with your neighbours. Export your local ledger and import
+            peer ledgers to expose broader patterns.
+          </p>
+          <div class="stats-grid" id="communityStats">
+            <div class="stat-card">
+              <div class="value" id="commResidents">0</div>
+              <div class="label">Total Residents</div>
+            </div>
+            <div class="stat-card">
+              <div class="value" id="commInvoices">0</div>
+              <div class="label">Invoices Scanned</div>
+            </div>
+            <div class="stat-card">
+              <div class="value" id="commFindings">0</div>
+              <div class="label">Anomalies Detected</div>
+            </div>
+            <div class="stat-card">
+              <div class="value" id="commAvgAnnual">-</div>
+              <div class="label">Mean Annual Cost</div>
+            </div>
+          </div>
+
+          <div style="display: flex; gap: 12px; margin-bottom: 8px; flex-wrap: wrap;">
+            <button class="btn btn-primary" onclick="exportMyData()">Export My Ledger</button>
+            <button class="btn btn-outline" onclick="document.getElementById('importInput').click()">Import Peer
+              Ledger</button>
+            <input type="file" id="importInput" accept=".json" style="display:none"
+              onchange="importData(this.files[0])">
+            <button class="btn btn-green" onclick="exportCommunityReport()">Export Global Report</button>
+          </div>
+        </div>
+
+        <div class="card">
+          <h2>Resident Database</h2>
+          <div id="residentsList">
+            <div class="empty-state">
+              <div class="icon">☷</div>
+              <p>No resident data present. Run your analysis and import neighbour files to populate this vector.</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <h2>Systemic Anomalies</h2>
+          <div id="commonFindings">
+            <div class="empty-state">
+              <p>Cross-resident findings will calculate here post-import.</p>
+            </div>
           </div>
         </div>
       </div>
-
-      <div class="card">
-        <h2>Systemic Anomalies</h2>
-        <div id="commonFindings">
-          <div class="empty-state">
-            <p>Cross-resident findings will calculate here post-import.</p>
-          </div>
-        </div>
-      </div>
-    </div>
-  </main>
-</div>
-
-<!-- NAME MODAL -->
-<div id="nameModal" class="hidden">
-  <div class="modal-content">
-    <h2>Identification Required</h2>
-    <p class="note">Specify a resident alias to tag your data in the community view. This identifier never leaves your device unless explicitly exported to a peer.</p>
-    <input type="text" id="residentName" placeholder="e.g. 14A Balfour Park" autofocus>
-    <p class="note" style="margin-bottom: 24px;">Your Newton account number will be derived autonomously from the uploaded documents.</p>
-    <button class="btn btn-primary" onclick="confirmName()" style="width: 100%;">Execute Analysis</button>
+    </main>
   </div>
-</div>
 
-<script>
-pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+  <!-- NAME MODAL -->
+  <div id="nameModal" class="hidden">
+    <div class="modal-content">
+      <h2>Identification Required</h2>
+      <p class="note">Specify a resident alias to tag your data in the community view. This identifier never leaves your
+        device unless explicitly exported to a peer.</p>
+      <input type="text" id="residentName" placeholder="e.g. 14A Balfour Park" autofocus>
+      <p class="note" style="margin-bottom: 24px;">Your Newton account number will be derived autonomously from the
+        uploaded documents.</p>
+      <button class="btn btn-primary" onclick="confirmName()" style="width: 100%;">Execute Analysis</button>
+    </div>
+  </div>
 
-// ===== STATE =====
-let uploadedFiles = [];
-let parsedInvoices = [];
-let analysisResults = null;
-let communityData = JSON.parse(localStorage.getItem('newton_community') || '[]');
+  <script>
+    pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
 
-// ===== TAB NAVIGATION =====
-function showTab(tab) {
-  document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
-  document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
-  document.getElementById('tab-' + tab).classList.add('active');
-  document.querySelectorAll('.tab-btn')[['upload','results','community'].indexOf(tab)].classList.add('active');
-  if (tab === 'community') refreshCommunity();
-}
+    // ===== STATE =====
+    let uploadedFiles = [];
+    let parsedInvoices = [];
+    let analysisResults = null;
+    let communityData = JSON.parse(localStorage.getItem('newton_community') || '[]');
 
-// ===== FILE HANDLING =====
-const dropZone = document.getElementById('dropZone');
-dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('drag-over'); });
-dropZone.addEventListener('dragleave', () => dropZone.classList.remove('drag-over'));
-dropZone.addEventListener('drop', e => { e.preventDefault(); dropZone.classList.remove('drag-over'); handleFiles(e.dataTransfer.files); });
-
-function handleFiles(files) {
-  const pdfs = Array.from(files).filter(f => f.type === 'application/pdf' || f.name.endsWith('.pdf'));
-  if (!pdfs.length) { alert('Please upload PDF files only.'); return; }
-  uploadedFiles.push(...pdfs);
-  renderFileList();
-}
-
-function renderFileList() {
-  document.getElementById('fileList').classList.remove('hidden');
-  const tbody = document.getElementById('fileListBody');
-  tbody.innerHTML = uploadedFiles.map((f, i) =>
-    `<tr><td>${f.name}</td><td><span class="badge badge-blue">Ready</span></td><td>-</td><td>-</td></tr>`
-  ).join('');
-}
-
-function clearAll() {
-  uploadedFiles = []; parsedInvoices = [];
-  document.getElementById('fileList').classList.add('hidden');
-  document.getElementById('fileListBody').innerHTML = '';
-}
-
-// ===== PDF PARSING =====
-async function extractTextFromPDF(file) {
-  const arrayBuffer = await file.arrayBuffer();
-  const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
-  let fullText = '';
-  for (let i = 1; i <= pdf.numPages; i++) {
-    const page = await pdf.getPage(i);
-    const content = await page.getTextContent();
-    const lines = [];
-    let lastY = null;
-    for (const item of content.items) {
-      if (lastY !== null && Math.abs(item.transform[5] - lastY) > 2) lines.push('\n');
-      lines.push(item.str);
-      lastY = item.transform[5];
+    // ===== TAB NAVIGATION =====
+    function showTab(tab) {
+      document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+      document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+      document.getElementById('tab-' + tab).classList.add('active');
+      document.querySelectorAll('.tab-btn')[['upload', 'results', 'community'].indexOf(tab)].classList.add('active');
+      if (tab === 'community') refreshCommunity();
     }
-    fullText += lines.join(' ') + '\n\n';
-  }
-  return fullText;
-}
 
-function parseNewtonInvoice(text, filename) {
-  const invoice = { filename, raw: text, charges: [], payments: [], findings: [] };
+    // ===== FILE HANDLING =====
+    const dropZone = document.getElementById('dropZone');
+    dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('drag-over'); });
+    dropZone.addEventListener('dragleave', () => dropZone.classList.remove('drag-over'));
+    dropZone.addEventListener('drop', e => { e.preventDefault(); dropZone.classList.remove('drag-over'); handleFiles(e.dataTransfer.files); });
 
-  // === INVOICE NUMBER ===
-  const allSevenDigit = [...text.matchAll(/\b(\d{7})\b/g)].map(m => m[1]);
-  invoice.number = allSevenDigit.find(n => !n.startsWith('0672004')) || 'Unknown';
+    function handleFiles(files) {
+      const pdfs = Array.from(files).filter(f => f.type === 'application/pdf' || f.name.endsWith('.pdf'));
+      if (!pdfs.length) { alert('Please upload PDF files only.'); return; }
+      uploadedFiles.push(...pdfs);
+      renderFileList();
+    }
 
-  // === ACCOUNT NUMBER ===
-  const accMatch = text.match(/(0672\d{6})/);
-  invoice.accountNumber = accMatch ? accMatch[1] : 'Unknown';
+    function renderFileList() {
+      document.getElementById('fileList').classList.remove('hidden');
+      const tbody = document.getElementById('fileListBody');
+      tbody.innerHTML = uploadedFiles.map((f, i) =>
+        `<tr><td>${f.name}</td><td><span class="badge badge-blue">Ready</span></td><td>-</td><td>-</td></tr>`
+      ).join('');
+    }
 
-  // === PERIOD ===
-  const topText = text.substring(0, 500);
-  const dates = [...topText.matchAll(/(\d{2}\/\d{2}\/\d{4})/g)].map(m => m[1]);
-  if (dates.length >= 3) {
-    invoice.date = dates[0];
-    invoice.periodFrom = dates[1];
-    invoice.periodTo = dates[2];
-  } else if (dates.length >= 2) {
-    invoice.periodFrom = dates[0];
-    invoice.periodTo = dates[1];
-  }
+    function clearAll() {
+      uploadedFiles = []; parsedInvoices = [];
+      document.getElementById('fileList').classList.add('hidden');
+      document.getElementById('fileListBody').innerHTML = '';
+    }
 
-  // === SECTION-BASED CHARGE PARSING ===
-  const VALID_SHARES = ['1', '32', '191', '213'];
-  const lines = text.split('\n').map(l => l.trim()).filter(l => l.length > 0);
-  let currentSection = 'unknown';
-
-  for (let i = 0; i < lines.length; i++) {
-    const line = lines[i];
-
-    if (/^\s*(?:Grounds|rounds)\s*$/i.test(line)) { currentSection = 'grounds'; continue; }
-    if (/(?:anage\s*ent\s*Fee|Management\s*Fee)/i.test(line) && line.length < 30) { currentSection = 'management'; continue; }
-    if (/^\s*Insurance\s*$/i.test(line)) { currentSection = 'insurance'; continue; }
-    if (/Apportionment\s*Fee/i.test(line)) { currentSection = 'apportionment'; continue; }
-
-    const shareMatch = line.match(/\b1\/(1|32|191|213)\b/);
-    if (!shareMatch) continue;
-    const share = '1/' + shareMatch[1];
-
-    const amountMatches = line.match(/([-]?[\d,]+\.\d{2})/g);
-    if (!amountMatches) continue;
-    const amounts = amountMatches.map(a => parseFloat(a.replace(',', '')));
-
-    const devTotal = amounts[0];
-    let yourCost = amounts.length >= 2 ? amounts[amounts.length - 1] : null;
-
-    if (amounts.length <= 1) {
-      const lookahead = [];
-      for (let j = i + 1; j < Math.min(i + 4, lines.length); j++) {
-        const nextAmounts = lines[j].match(/([-]?[\d,]+\.\d{2})/g);
-        if (nextAmounts) lookahead.push(...nextAmounts.map(a => parseFloat(a.replace(',', ''))));
-        if (lookahead.length >= 2) break;
+    // ===== PDF PARSING =====
+    async function extractTextFromPDF(file) {
+      const arrayBuffer = await file.arrayBuffer();
+      const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+      let fullText = '';
+      for (let i = 1; i <= pdf.numPages; i++) {
+        const page = await pdf.getPage(i);
+        const content = await page.getTextContent();
+        const lines = [];
+        let lastY = null;
+        for (const item of content.items) {
+          if (lastY !== null && Math.abs(item.transform[5] - lastY) > 2) lines.push('\n');
+          lines.push(item.str);
+          lastY = item.transform[5];
+        }
+        fullText += lines.join(' ') + '\n\n';
       }
-      yourCost = lookahead.length >= 2 ? lookahead[1] : (lookahead[0] || null);
+      return fullText;
     }
-    if (yourCost === null) continue;
 
-    let description = '';
-    for (let j = Math.max(0, i - 6); j < i; j++) {
-      const prev = lines[j];
-      if (/^\d{2}\/\d{2}\/\d{4}\s/.test(prev) && prev.length > 40) continue;
-      if (/Kilgours|McAndrew|Newcraighall|Edinburgh|PAYMENTS|RECEIVED|BALANCE|Fie\s*lds/i.test(prev)) continue;
-      if (/maintenance|Fyvie|JD\s*Landscape|Grounds|Management|Insurance|Property|Newton|Travelers|HDN|NIG|Resolvecall|Debt|Collection|Agency|Apportionment|E-?billing|Discount/i.test(prev)) {
-        description += prev + ' ';
+    function parseNewtonInvoice(text, filename) {
+      const invoice = { filename, raw: text, charges: [], payments: [], findings: [] };
+
+      // === INVOICE NUMBER ===
+      const allSevenDigit = [...text.matchAll(/\b(\d{7})\b/g)].map(m => m[1]);
+      invoice.number = allSevenDigit.find(n => !n.startsWith('0672004')) || 'Unknown';
+
+      // === ACCOUNT NUMBER ===
+      const accMatch = text.match(/(0672\d{6})/);
+      invoice.accountNumber = accMatch ? accMatch[1] : 'Unknown';
+
+      // === PERIOD ===
+      const topText = text.substring(0, 500);
+      const dates = [...topText.matchAll(/(\d{2}\/\d{2}\/\d{4})/g)].map(m => m[1]);
+      if (dates.length >= 3) {
+        invoice.date = dates[0];
+        invoice.periodFrom = dates[1];
+        invoice.periodTo = dates[2];
+      } else if (dates.length >= 2) {
+        invoice.periodFrom = dates[0];
+        invoice.periodTo = dates[1];
       }
-    }
-    description = description.trim() || `${currentSection} charge`;
 
-    const isDebtFee = (currentSection === 'apportionment' && /resolvecall|debt|collection|agency/i.test(description)) ||
-                      /resolvecall|debt\s*collection/i.test(description);
-    const isEbillingDiscount = /e-?billing\s*discount/i.test(description);
-    const isManagementFee = (currentSection === 'management' || /management\s*fee/i.test(description)) && !isDebtFee && !isEbillingDiscount;
-    const isInsurance = (currentSection === 'insurance' || /insurance|travelers|hdn|nig/i.test(description)) && !isDebtFee;
-    const isGroundMaintenance = (currentSection === 'grounds' || /ground|maintenance|fyvie|jd\s*landscape|fencing/i.test(description))
-                                && !isManagementFee && !isDebtFee && !isInsurance && !isEbillingDiscount;
-    const isCredit = devTotal < 0 || /credit|cr\b/i.test(description) || isEbillingDiscount;
+      // === SECTION-BASED CHARGE PARSING ===
+      const VALID_SHARES = ['1', '32', '191', '213'];
+      const lines = text.split('\n').map(l => l.trim()).filter(l => l.length > 0);
+      let currentSection = 'unknown';
 
-    invoice.charges.push({
-      description: description.substring(0, 100),
-      share, devTotal, yourCost,
-      isGroundMaintenance, isManagementFee, isDebtFee, isInsurance, isCredit, isEbillingDiscount,
-      raw: line
-    });
-  }
+      for (let i = 0; i < lines.length; i++) {
+        const line = lines[i];
 
-  // === INVOICE TOTAL ===
-  const allDR = [...text.matchAll(/([\d,]+\.\d{2})\s+DR/g)];
-  if (allDR.length > 0) {
-    const lastDR = parseFloat(allDR[allDR.length - 1][1].replace(',', ''));
-    invoice.total = lastDR;
-  }
+        if (/^\s*(?:Grounds|rounds)\s*$/i.test(line)) { currentSection = 'grounds'; continue; }
+        if (/(?:anage\s*ent\s*Fee|Management\s*Fee)/i.test(line) && line.length < 30) { currentSection = 'management'; continue; }
+        if (/^\s*Insurance\s*$/i.test(line)) { currentSection = 'insurance'; continue; }
+        if (/Apportionment\s*Fee/i.test(line)) { currentSection = 'apportionment'; continue; }
 
-  // === VAT ===
-  const vatMatch = text.match(/VAT[:\s]*£?([\d,]+\.\d{2})/i);
-  if (vatMatch) invoice.vat = parseFloat(vatMatch[1].replace(',', ''));
+        const shareMatch = line.match(/\b1\/(1|32|191|213)\b/);
+        if (!shareMatch) continue;
+        const share = '1/' + shareMatch[1];
 
-  // === TYPE ===
-  if (/outstanding\s*balance|reminder|notice/i.test(text)) invoice.type = 'reminder';
-  else if (invoice.charges.length > 0) invoice.type = 'invoice';
-  else invoice.type = 'unknown';
+        const amountMatches = line.match(/([-]?[\d,]+\.\d{2})/g);
+        if (!amountMatches) continue;
+        const amounts = amountMatches.map(a => parseFloat(a.replace(',', '')));
 
-  return invoice;
-}
+        const devTotal = amounts[0];
+        let yourCost = amounts.length >= 2 ? amounts[amounts.length - 1] : null;
 
-// ===== ANALYSIS ENGINE =====
-function analyseInvoices(invoices) {
-  const results = {
-    invoices: invoices,
-    findings: [],
-    summary: { totalCharged: 0, groundMaintenance: 0, managementFees: 0, debtFees: 0, insurance: 0, discounts: 0 }
-  };
+        if (amounts.length <= 1) {
+          const lookahead = [];
+          for (let j = i + 1; j < Math.min(i + 4, lines.length); j++) {
+            const nextAmounts = lines[j].match(/([-]?[\d,]+\.\d{2})/g);
+            if (nextAmounts) lookahead.push(...nextAmounts.map(a => parseFloat(a.replace(',', ''))));
+            if (lookahead.length >= 2) break;
+          }
+          yourCost = lookahead.length >= 2 ? lookahead[1] : (lookahead[0] || null);
+        }
+        if (yourCost === null) continue;
 
-  // 1. Duplicate entries ACROSS DIFFERENT invoices
-  const chargeSignatures = new Map();
-  for (const inv of invoices) {
-    for (const charge of inv.charges) {
-      const sig = `${charge.share}|${charge.devTotal}|${charge.yourCost}`;
-      if (!chargeSignatures.has(sig)) chargeSignatures.set(sig, []);
-      chargeSignatures.get(sig).push({ invoice: inv.number, charge });
-    }
-  }
-  for (const [sig, occurrences] of chargeSignatures) {
-    const uniqueInvoices = new Set(occurrences.map(o => o.invoice));
-    if (uniqueInvoices.size > 1 && !occurrences[0].charge.isCredit && !occurrences[0].charge.isManagementFee) {
-      results.findings.push({
-        severity: 'HIGH', type: 'duplicate',
-        title: 'Potential Duplicate Billing Entry',
-        detail: `The charge "${occurrences[0].charge.description.substring(0, 60)}" (£${Math.abs(occurrences[0].charge.yourCost).toFixed(2)}) appears on invoices: ${[...uniqueInvoices].join(', ')}`,
-        invoices: [...uniqueInvoices]
-      });
-    }
-  }
+        let description = '';
+        for (let j = Math.max(0, i - 6); j < i; j++) {
+          const prev = lines[j];
+          if (/^\d{2}\/\d{2}\/\d{4}\s/.test(prev) && prev.length > 40) continue;
+          if (/Kilgours|McAndrew|Newcraighall|Edinburgh|PAYMENTS|RECEIVED|BALANCE|Fie\s*lds/i.test(prev)) continue;
+          if (/maintenance|Fyvie|JD\s*Landscape|Grounds|Management|Insurance|Property|Newton|Travelers|HDN|NIG|Resolvecall|Debt|Collection|Agency|Apportionment|E-?billing|Discount/i.test(prev)) {
+            description += prev + ' ';
+          }
+        }
+        description = description.trim() || `${currentSection} charge`;
 
-  // 2. Debt collection fees
-  const debtCharges = invoices.flatMap(inv => inv.charges.filter(c => c.isDebtFee));
-  if (debtCharges.length > 0) {
-    const totalDebt = debtCharges.reduce((sum, c) => sum + c.yourCost, 0);
-    results.findings.push({
-      severity: 'HIGH', type: 'debt-fees',
-      title: 'Debt Collection Fees Charged to You',
-      detail: `You have been charged £${totalDebt.toFixed(2)} in debt collection agency fees across ${debtCharges.length} invoice(s). The Written Statement of Services should explicitly permit these charges.`
-    });
-    results.summary.debtFees = totalDebt;
-  }
+        const isDebtFee = (currentSection === 'apportionment' && /resolvecall|debt|collection|agency/i.test(description)) ||
+          /resolvecall|debt\s*collection/i.test(description);
+        const isEbillingDiscount = /e-?billing\s*discount/i.test(description);
+        const isManagementFee = (currentSection === 'management' || /management\s*fee/i.test(description)) && !isDebtFee && !isEbillingDiscount;
+        const isInsurance = (currentSection === 'insurance' || /insurance|travelers|hdn|nig/i.test(description)) && !isDebtFee;
+        const isGroundMaintenance = (currentSection === 'grounds' || /ground|maintenance|fyvie|jd\s*landscape|fencing/i.test(description))
+          && !isManagementFee && !isDebtFee && !isInsurance && !isEbillingDiscount;
+        const isCredit = devTotal < 0 || /credit|cr\b/i.test(description) || isEbillingDiscount;
 
-  // 3. Mixed share ratios on ground maintenance
-  const shareRatios = new Set();
-  for (const inv of invoices) {
-    for (const charge of inv.charges) {
-      if (charge.isGroundMaintenance && charge.share !== '1/1') shareRatios.add(charge.share);
-    }
-  }
-  if (shareRatios.size > 1) {
-    results.findings.push({
-      severity: 'MEDIUM', type: 'share-change',
-      title: 'Ground Maintenance Share Ratio Changed',
-      detail: `Your ground maintenance charges use ${shareRatios.size} different share ratios: ${Array.from(shareRatios).join(', ')}. This change should have been clearly communicated.`
-    });
-  }
-
-  // 4. Calculate totals and annualised cost
-  let totalCharged = 0;
-  for (const inv of invoices) {
-    if (inv.total) totalCharged += inv.total;
-    for (const c of inv.charges) {
-      if (c.isGroundMaintenance && !c.isCredit) results.summary.groundMaintenance += Math.abs(c.yourCost);
-      if (c.isManagementFee && !c.isEbillingDiscount) results.summary.managementFees += c.yourCost;
-      if (c.isInsurance) results.summary.insurance += c.yourCost;
-      if (c.isDebtFee) results.summary.debtFees += c.yourCost;
-      if (c.isCredit || c.isEbillingDiscount) results.summary.discounts += c.yourCost;
-    }
-  }
-  results.summary.totalCharged = totalCharged;
-
-  // Work out the period covered — use contiguous billing cluster
-  function parseDDMMYYYY(s) {
-    if (!s) return null;
-    const parts = s.split('/');
-    if (parts.length !== 3) return null;
-    return new Date(parseInt(parts[2]), parseInt(parts[1]) - 1, parseInt(parts[0]));
-  }
-
-  const invoiceDates = invoices.map(inv => {
-    const d = parseDDMMYYYY(inv.periodFrom) || parseDDMMYYYY(inv.date) || parseDDMMYYYY(inv.periodTo);
-    return { inv, date: d };
-  }).filter(x => x.date && !isNaN(x.date.getTime())).sort((a, b) => a.date - b.date);
-
-  let contiguousInvoices = invoices;
-  let years = 1;
-  let periodLabel = '';
-
-  if (invoiceDates.length >= 2) {
-    let clusterStart = 0;
-    for (let i = 1; i < invoiceDates.length; i++) {
-      const gap = (invoiceDates[i].date - invoiceDates[i-1].date) / (1000 * 60 * 60 * 24);
-      if (gap > 180) clusterStart = i;
-    }
-
-    contiguousInvoices = invoiceDates.slice(clusterStart).map(x => x.inv);
-    const clusterDates = contiguousInvoices.flatMap(inv => [inv.periodFrom, inv.periodTo, inv.date].filter(Boolean)).map(parseDDMMYYYY).filter(d => d && !isNaN(d.getTime()));
-    const earliest = new Date(Math.min(...clusterDates.map(d => d.getTime())));
-    const latest = new Date(Math.max(...clusterDates.map(d => d.getTime())));
-    const daysDiff = (latest - earliest) / (1000 * 60 * 60 * 24);
-    years = Math.max(daysDiff / 365.25, 0.25);
-    periodLabel = `${earliest.toLocaleDateString('en-GB')} to ${latest.toLocaleDateString('en-GB')}`;
-
-    // Recalculate total for contiguous cluster only
-    totalCharged = 0;
-    results.summary = { totalCharged: 0, groundMaintenance: 0, managementFees: 0, debtFees: 0, insurance: 0, discounts: 0 };
-    for (const inv of contiguousInvoices) {
-      if (inv.total) totalCharged += inv.total;
-      for (const c of inv.charges) {
-        if (c.isGroundMaintenance && !c.isCredit) results.summary.groundMaintenance += Math.abs(c.yourCost);
-        if (c.isManagementFee && !c.isEbillingDiscount) results.summary.managementFees += c.yourCost;
-        if (c.isInsurance) results.summary.insurance += c.yourCost;
-        if (c.isDebtFee) results.summary.debtFees += c.yourCost;
-        if (c.isCredit || c.isEbillingDiscount) results.summary.discounts += c.yourCost;
+        invoice.charges.push({
+          description: description.substring(0, 100),
+          share, devTotal, yourCost,
+          isGroundMaintenance, isManagementFee, isDebtFee, isInsurance, isCredit, isEbillingDiscount,
+          raw: line
+        });
       }
+
+      // === INVOICE TOTAL ===
+      const allDR = [...text.matchAll(/([\d,]+\.\d{2})\s+DR/g)];
+      if (allDR.length > 0) {
+        const lastDR = parseFloat(allDR[allDR.length - 1][1].replace(',', ''));
+        invoice.total = lastDR;
+      }
+
+      // === VAT ===
+      const vatMatch = text.match(/VAT[:\s]*£?([\d,]+\.\d{2})/i);
+      if (vatMatch) invoice.vat = parseFloat(vatMatch[1].replace(',', ''));
+
+      // === TYPE ===
+      if (/outstanding\s*balance|reminder|notice/i.test(text)) invoice.type = 'reminder';
+      else if (invoice.charges.length > 0) invoice.type = 'invoice';
+      else invoice.type = 'unknown';
+
+      return invoice;
     }
-    results.summary.totalCharged = totalCharged;
-  }
 
-  const annualCost = totalCharged / years;
-  results.summary.years = years;
-  results.summary.annualCost = annualCost;
-  results.summary.periodLabel = periodLabel;
-  results.summary.clusterSize = contiguousInvoices.length;
-  results.summary.totalInvoices = invoices.length;
+    // ===== ANALYSIS ENGINE =====
+    function analyseInvoices(invoices) {
+      const results = {
+        invoices: invoices,
+        findings: [],
+        summary: { totalCharged: 0, groundMaintenance: 0, managementFees: 0, debtFees: 0, insurance: 0, discounts: 0 }
+      };
 
-  if (annualCost > 150) {
-    results.findings.push({
-      severity: 'HIGH', type: 'cost-excess',
-      title: 'Annual Charges Significantly Exceed Quoted Figure',
-      detail: `Total charges: £${totalCharged.toFixed(2)} over ${years.toFixed(1)} year${years >= 1.5 ? 's' : ''} = £${annualCost.toFixed(2)}/year. The commonly quoted annual charge is approximately £110. Your actual annual cost is ${(annualCost / 110).toFixed(1)}x higher.`
-    });
-  }
+      // 1. Duplicate entries ACROSS DIFFERENT invoices
+      const chargeSignatures = new Map();
+      for (const inv of invoices) {
+        for (const charge of inv.charges) {
+          const sig = `${charge.share}|${charge.devTotal}|${charge.yourCost}`;
+          if (!chargeSignatures.has(sig)) chargeSignatures.set(sig, []);
+          chargeSignatures.get(sig).push({ invoice: inv.number, charge });
+        }
+      }
+      for (const [sig, occurrences] of chargeSignatures) {
+        const uniqueInvoices = new Set(occurrences.map(o => o.invoice));
+        if (uniqueInvoices.size > 1 && !occurrences[0].charge.isCredit && !occurrences[0].charge.isManagementFee) {
+          results.findings.push({
+            severity: 'HIGH', type: 'duplicate',
+            title: 'Potential Duplicate Billing Entry',
+            detail: `The charge "${occurrences[0].charge.description.substring(0, 60)}" (£${Math.abs(occurrences[0].charge.yourCost).toFixed(2)}) appears on invoices: ${[...uniqueInvoices].join(', ')}`,
+            invoices: [...uniqueInvoices]
+          });
+        }
+      }
 
-  // 5. Ground maintenance increase after correction
-  const gmCharges = invoices.flatMap(inv => inv.charges.filter(c => c.isGroundMaintenance && !c.isCredit));
-  const oldRate = gmCharges.filter(c => c.share === '1/32');
-  const newRate = gmCharges.filter(c => c.share === '1/191');
-  if (oldRate.length > 0 && newRate.length > 0) {
-    const oldQuarterly = oldRate[0].yourCost;
-    const newMonthly = newRate[0].yourCost;
-    const newQuarterly = newMonthly * 3;
-    if (newQuarterly > oldQuarterly) {
-      const increase = ((newQuarterly - oldQuarterly) / oldQuarterly * 100).toFixed(0);
-      results.findings.push({
-        severity: 'MEDIUM', type: 'cost-increase',
-        title: 'Ground Maintenance Costs Increased After "Correction"',
-        detail: `Quarterly ground maintenance went from £${oldQuarterly.toFixed(2)} (1/32) to £${newQuarterly.toFixed(2)} (3 × £${newMonthly.toFixed(2)} at 1/191). That's a ${increase}% increase — a correction should not cost you more.`
-      });
+      // 2. Debt collection fees
+      const debtCharges = invoices.flatMap(inv => inv.charges.filter(c => c.isDebtFee));
+      if (debtCharges.length > 0) {
+        const totalDebt = debtCharges.reduce((sum, c) => sum + c.yourCost, 0);
+        results.findings.push({
+          severity: 'HIGH', type: 'debt-fees',
+          title: 'Debt Collection Fees Charged to You',
+          detail: `You have been charged £${totalDebt.toFixed(2)} in debt collection agency fees across ${debtCharges.length} invoice(s). The Written Statement of Services should explicitly permit these charges.`
+        });
+        results.summary.debtFees = totalDebt;
+      }
+
+      // 3. Mixed share ratios on ground maintenance
+      const shareRatios = new Set();
+      for (const inv of invoices) {
+        for (const charge of inv.charges) {
+          if (charge.isGroundMaintenance && charge.share !== '1/1') shareRatios.add(charge.share);
+        }
+      }
+      if (shareRatios.size > 1) {
+        results.findings.push({
+          severity: 'MEDIUM', type: 'share-change',
+          title: 'Ground Maintenance Share Ratio Changed',
+          detail: `Your ground maintenance charges use ${shareRatios.size} different share ratios: ${Array.from(shareRatios).join(', ')}. This change should have been clearly communicated.`
+        });
+      }
+
+      // 4. Calculate totals and annualised cost
+      let totalCharged = 0;
+      for (const inv of invoices) {
+        if (inv.total) totalCharged += inv.total;
+        for (const c of inv.charges) {
+          if (c.isGroundMaintenance && !c.isCredit) results.summary.groundMaintenance += Math.abs(c.yourCost);
+          if (c.isManagementFee && !c.isEbillingDiscount) results.summary.managementFees += c.yourCost;
+          if (c.isInsurance) results.summary.insurance += c.yourCost;
+          if (c.isDebtFee) results.summary.debtFees += c.yourCost;
+          if (c.isCredit || c.isEbillingDiscount) results.summary.discounts += c.yourCost;
+        }
+      }
+      results.summary.totalCharged = totalCharged;
+
+      // Work out the period covered — use contiguous billing cluster
+      function parseDDMMYYYY(s) {
+        if (!s) return null;
+        const parts = s.split('/');
+        if (parts.length !== 3) return null;
+        return new Date(parseInt(parts[2]), parseInt(parts[1]) - 1, parseInt(parts[0]));
+      }
+
+      const invoiceDates = invoices.map(inv => {
+        const d = parseDDMMYYYY(inv.periodFrom) || parseDDMMYYYY(inv.date) || parseDDMMYYYY(inv.periodTo);
+        return { inv, date: d };
+      }).filter(x => x.date && !isNaN(x.date.getTime())).sort((a, b) => a.date - b.date);
+
+      let contiguousInvoices = invoices;
+      let years = 1;
+      let periodLabel = '';
+
+      if (invoiceDates.length >= 2) {
+        let clusterStart = 0;
+        for (let i = 1; i < invoiceDates.length; i++) {
+          const gap = (invoiceDates[i].date - invoiceDates[i - 1].date) / (1000 * 60 * 60 * 24);
+          if (gap > 180) clusterStart = i;
+        }
+
+        contiguousInvoices = invoiceDates.slice(clusterStart).map(x => x.inv);
+        const clusterDates = contiguousInvoices.flatMap(inv => [inv.periodFrom, inv.periodTo, inv.date].filter(Boolean)).map(parseDDMMYYYY).filter(d => d && !isNaN(d.getTime()));
+        const earliest = new Date(Math.min(...clusterDates.map(d => d.getTime())));
+        const latest = new Date(Math.max(...clusterDates.map(d => d.getTime())));
+        const daysDiff = (latest - earliest) / (1000 * 60 * 60 * 24);
+        years = Math.max(daysDiff / 365.25, 0.25);
+        periodLabel = `${earliest.toLocaleDateString('en-GB')} to ${latest.toLocaleDateString('en-GB')}`;
+
+        // Recalculate total for contiguous cluster only
+        totalCharged = 0;
+        results.summary = { totalCharged: 0, groundMaintenance: 0, managementFees: 0, debtFees: 0, insurance: 0, discounts: 0 };
+        for (const inv of contiguousInvoices) {
+          if (inv.total) totalCharged += inv.total;
+          for (const c of inv.charges) {
+            if (c.isGroundMaintenance && !c.isCredit) results.summary.groundMaintenance += Math.abs(c.yourCost);
+            if (c.isManagementFee && !c.isEbillingDiscount) results.summary.managementFees += c.yourCost;
+            if (c.isInsurance) results.summary.insurance += c.yourCost;
+            if (c.isDebtFee) results.summary.debtFees += c.yourCost;
+            if (c.isCredit || c.isEbillingDiscount) results.summary.discounts += c.yourCost;
+          }
+        }
+        results.summary.totalCharged = totalCharged;
+      }
+
+      const annualCost = totalCharged / years;
+      results.summary.years = years;
+      results.summary.annualCost = annualCost;
+      results.summary.periodLabel = periodLabel;
+      results.summary.clusterSize = contiguousInvoices.length;
+      results.summary.totalInvoices = invoices.length;
+
+      if (annualCost > 150) {
+        results.findings.push({
+          severity: 'HIGH', type: 'cost-excess',
+          title: 'Annual Charges Significantly Exceed Quoted Figure',
+          detail: `Total charges: £${totalCharged.toFixed(2)} over ${years.toFixed(1)} year${years >= 1.5 ? 's' : ''} = £${annualCost.toFixed(2)}/year. The commonly quoted annual charge is approximately £110. Your actual annual cost is ${(annualCost / 110).toFixed(1)}x higher.`
+        });
+      }
+
+      // 5. Ground maintenance increase after correction
+      const gmCharges = invoices.flatMap(inv => inv.charges.filter(c => c.isGroundMaintenance && !c.isCredit));
+      const oldRate = gmCharges.filter(c => c.share === '1/32');
+      const newRate = gmCharges.filter(c => c.share === '1/191');
+      if (oldRate.length > 0 && newRate.length > 0) {
+        const oldQuarterly = oldRate[0].yourCost;
+        const newMonthly = newRate[0].yourCost;
+        const newQuarterly = newMonthly * 3;
+        if (newQuarterly > oldQuarterly) {
+          const increase = ((newQuarterly - oldQuarterly) / oldQuarterly * 100).toFixed(0);
+          results.findings.push({
+            severity: 'MEDIUM', type: 'cost-increase',
+            title: 'Ground Maintenance Costs Increased After "Correction"',
+            detail: `Quarterly ground maintenance went from £${oldQuarterly.toFixed(2)} (1/32) to £${newQuarterly.toFixed(2)} (3 × £${newMonthly.toFixed(2)} at 1/191). That's a ${increase}% increase — a correction should not cost you more.`
+          });
+        }
+      }
+
+      return results;
     }
-  }
 
-  return results;
-}
+    // ===== MAIN ANALYSIS FLOW =====
+    async function analyseAll() {
+      if (!uploadedFiles.length) return;
 
-// ===== MAIN ANALYSIS FLOW =====
-async function analyseAll() {
-  if (!uploadedFiles.length) return;
-
-  const savedName = localStorage.getItem('newton_resident_name');
-  if (!savedName) {
-    document.getElementById('nameModal').classList.remove('hidden');
-    return;
-  }
-  runAnalysis(savedName);
-}
-
-async function confirmName() {
-  const name = document.getElementById('residentName').value.trim();
-  if (!name) return;
-  localStorage.setItem('newton_resident_name', name);
-  document.getElementById('nameModal').classList.add('hidden');
-  runAnalysis(name);
-}
-
-async function runAnalysis(residentName) {
-  const progress = document.getElementById('parseProgress');
-  const fill = document.getElementById('progressFill');
-  progress.classList.remove('hidden');
-
-  parsedInvoices = [];
-  const tbody = document.getElementById('fileListBody');
-
-  const seenNumbers = new Set();
-  for (let i = 0; i < uploadedFiles.length; i++) {
-    fill.style.width = ((i + 1) / uploadedFiles.length * 100) + '%';
-    try {
-      const text = await extractTextFromPDF(uploadedFiles[i]);
-      const invoice = parseNewtonInvoice(text, uploadedFiles[i].name);
-      parsedInvoices.push(invoice);
-      const isDupe = invoice.number !== 'Unknown' && seenNumbers.has(invoice.number);
-      seenNumbers.add(invoice.number);
-      const statusBadge = isDupe
-        ? '<span class="badge badge-orange">Duplicate</span>'
-        : (invoice.charges.length > 0 ? '<span class="badge badge-green">Parsed</span>' : '<span class="badge badge-blue">No charges</span>');
-      tbody.children[i].innerHTML = `<td>${uploadedFiles[i].name}</td><td>${statusBadge}</td><td>${invoice.number}</td><td>${invoice.total ? '£' + invoice.total.toFixed(2) : '-'}</td>`;
-    } catch (err) {
-      tbody.children[i].innerHTML = `<td>${uploadedFiles[i].name}</td><td><span class="badge badge-red">Error</span></td><td>-</td><td>-</td>`;
+      const savedName = localStorage.getItem('newton_resident_name');
+      if (!savedName) {
+        document.getElementById('nameModal').classList.remove('hidden');
+        return;
+      }
+      runAnalysis(savedName);
     }
-  }
 
-  // Deduplicate by invoice number
-  const seen = new Map();
-  for (const inv of parsedInvoices) {
-    const key = inv.number !== 'Unknown' ? inv.number : inv.filename;
-    if (!seen.has(key) || (inv.charges.length > (seen.get(key).charges.length))) {
-      seen.set(key, inv);
+    async function confirmName() {
+      const name = document.getElementById('residentName').value.trim();
+      if (!name) return;
+      localStorage.setItem('newton_resident_name', name);
+      document.getElementById('nameModal').classList.add('hidden');
+      runAnalysis(name);
     }
-  }
-  const uniqueInvoices = [...seen.values()];
-  const dupeCount = parsedInvoices.length - uniqueInvoices.length;
-  if (dupeCount > 0) {
-    console.log(`Deduplicated: ${parsedInvoices.length} → ${uniqueInvoices.length} (removed ${dupeCount} duplicates)`);
-  }
 
-  // Run analysis on deduplicated invoices
-  analysisResults = analyseInvoices(uniqueInvoices);
-  analysisResults.residentName = residentName;
-  analysisResults.accountNumber = parsedInvoices.find(i => i.accountNumber !== 'Unknown')?.accountNumber || 'Unknown';
-  analysisResults.timestamp = new Date().toISOString();
+    async function runAnalysis(residentName) {
+      const progress = document.getElementById('parseProgress');
+      const fill = document.getElementById('progressFill');
+      progress.classList.remove('hidden');
 
-  // Save to community
-  saveToCommunity(analysisResults);
+      parsedInvoices = [];
+      const tbody = document.getElementById('fileListBody');
 
-  // Render results
-  renderResults(analysisResults);
-  showTab('results');
-  progress.classList.add('hidden');
-}
+      const seenNumbers = new Set();
+      for (let i = 0; i < uploadedFiles.length; i++) {
+        fill.style.width = ((i + 1) / uploadedFiles.length * 100) + '%';
+        try {
+          const text = await extractTextFromPDF(uploadedFiles[i]);
+          const invoice = parseNewtonInvoice(text, uploadedFiles[i].name);
+          parsedInvoices.push(invoice);
+          const isDupe = invoice.number !== 'Unknown' && seenNumbers.has(invoice.number);
+          seenNumbers.add(invoice.number);
+          const statusBadge = isDupe
+            ? '<span class="badge badge-orange">Duplicate</span>'
+            : (invoice.charges.length > 0 ? '<span class="badge badge-green">Parsed</span>' : '<span class="badge badge-blue">No charges</span>');
+          tbody.children[i].innerHTML = `<td>${uploadedFiles[i].name}</td><td>${statusBadge}</td><td>${invoice.number}</td><td>${invoice.total ? '£' + invoice.total.toFixed(2) : '-'}</td>`;
+        } catch (err) {
+          tbody.children[i].innerHTML = `<td>${uploadedFiles[i].name}</td><td><span class="badge badge-red">Error</span></td><td>-</td><td>-</td>`;
+        }
+      }
 
-// ===== RENDER RESULTS =====
-function renderResults(results) {
-  document.getElementById('noResults').classList.add('hidden');
-  const container = document.getElementById('resultsContent');
-  container.classList.remove('hidden');
+      // Deduplicate by invoice number
+      const seen = new Map();
+      for (const inv of parsedInvoices) {
+        const key = inv.number !== 'Unknown' ? inv.number : inv.filename;
+        if (!seen.has(key) || (inv.charges.length > (seen.get(key).charges.length))) {
+          seen.set(key, inv);
+        }
+      }
+      const uniqueInvoices = [...seen.values()];
+      const dupeCount = parsedInvoices.length - uniqueInvoices.length;
+      if (dupeCount > 0) {
+        console.log(`Deduplicated: ${parsedInvoices.length} → ${uniqueInvoices.length} (removed ${dupeCount} duplicates)`);
+      }
 
-  const highFindings = results.findings.filter(f => f.severity === 'HIGH').length;
-  const medFindings = results.findings.filter(f => f.severity === 'MEDIUM').length;
+      // Run analysis on deduplicated invoices
+      analysisResults = analyseInvoices(uniqueInvoices);
+      analysisResults.residentName = residentName;
+      analysisResults.accountNumber = parsedInvoices.find(i => i.accountNumber !== 'Unknown')?.accountNumber || 'Unknown';
+      analysisResults.timestamp = new Date().toISOString();
 
-  const yrs = results.summary.years || 1;
-  const annual = results.summary.annualCost || results.summary.totalCharged;
-  const clusterNote = (results.summary.totalInvoices && results.summary.clusterSize && results.summary.clusterSize < results.summary.totalInvoices)
-    ? ` &mdash; using ${results.summary.clusterSize} of ${results.summary.totalInvoices} invoices (older invoices excluded from annual calculation)`
-    : '';
-  const periodInfo = results.summary.periodLabel ? `<p style="color: var(--muted); font-size: 0.8rem; text-align: center; margin-bottom: 12px;">Period: ${results.summary.periodLabel} (${yrs.toFixed(1)} year${yrs >= 1.5 ? 's' : ''})${clusterNote}</p>` : '';
+      // Save to community
+      saveToCommunity(analysisResults);
 
-  container.innerHTML = `
+      // Render results
+      renderResults(analysisResults);
+      showTab('results');
+      progress.classList.add('hidden');
+    }
+
+    // ===== RENDER RESULTS =====
+    function renderResults(results) {
+      document.getElementById('noResults').classList.add('hidden');
+      const container = document.getElementById('resultsContent');
+      container.classList.remove('hidden');
+
+      const highFindings = results.findings.filter(f => f.severity === 'HIGH').length;
+      const medFindings = results.findings.filter(f => f.severity === 'MEDIUM').length;
+
+      const yrs = results.summary.years || 1;
+      const annual = results.summary.annualCost || results.summary.totalCharged;
+      const clusterNote = (results.summary.totalInvoices && results.summary.clusterSize && results.summary.clusterSize < results.summary.totalInvoices)
+        ? ` &mdash; using ${results.summary.clusterSize} of ${results.summary.totalInvoices} invoices (older invoices excluded from annual calculation)`
+        : '';
+      const periodInfo = results.summary.periodLabel ? `<p style="color: var(--muted); font-size: 0.8rem; text-align: center; margin-bottom: 12px;">Period: ${results.summary.periodLabel} (${yrs.toFixed(1)} year${yrs >= 1.5 ? 's' : ''})${clusterNote}</p>` : '';
+
+      container.innerHTML = `
     ${periodInfo}
     <div class="stats-grid">
       <div class="stat-card"><div class="value">${results.invoices.length}</div><div class="label">Invoices Analysed</div></div>
@@ -992,43 +1488,43 @@ function renderResults(results) {
       </div>
     </div>
   `;
-}
+    }
 
-// ===== COMMUNITY FEATURES =====
-function saveToCommunity(results) {
-  const existing = communityData.findIndex(r => r.accountNumber === results.accountNumber);
-  const entry = {
-    residentName: results.residentName,
-    accountNumber: results.accountNumber,
-    invoiceCount: results.invoices.length,
-    totalCharged: results.summary.totalCharged,
-    annualCost: results.summary.annualCost || results.summary.totalCharged,
-    years: results.summary.years || 1,
-    periodLabel: results.summary.periodLabel || '',
-    findings: results.findings,
-    summary: results.summary,
-    timestamp: results.timestamp
-  };
-  if (existing >= 0) communityData[existing] = entry;
-  else communityData.push(entry);
-  localStorage.setItem('newton_community', JSON.stringify(communityData));
-}
+    // ===== COMMUNITY FEATURES =====
+    function saveToCommunity(results) {
+      const existing = communityData.findIndex(r => r.accountNumber === results.accountNumber);
+      const entry = {
+        residentName: results.residentName,
+        accountNumber: results.accountNumber,
+        invoiceCount: results.invoices.length,
+        totalCharged: results.summary.totalCharged,
+        annualCost: results.summary.annualCost || results.summary.totalCharged,
+        years: results.summary.years || 1,
+        periodLabel: results.summary.periodLabel || '',
+        findings: results.findings,
+        summary: results.summary,
+        timestamp: results.timestamp
+      };
+      if (existing >= 0) communityData[existing] = entry;
+      else communityData.push(entry);
+      localStorage.setItem('newton_community', JSON.stringify(communityData));
+    }
 
-function refreshCommunity() {
-  communityData = JSON.parse(localStorage.getItem('newton_community') || '[]');
-  document.getElementById('commResidents').textContent = communityData.length;
-  document.getElementById('commInvoices').textContent = communityData.reduce((s, r) => s + r.invoiceCount, 0);
-  document.getElementById('commFindings').textContent = communityData.reduce((s, r) => s + r.findings.length, 0);
-  const avgAnnual = communityData.length > 0
-    ? '£' + (communityData.reduce((s, r) => s + (r.annualCost || r.totalCharged), 0) / communityData.length).toFixed(0)
-    : '-';
-  document.getElementById('commAvgAnnual').textContent = avgAnnual;
+    function refreshCommunity() {
+      communityData = JSON.parse(localStorage.getItem('newton_community') || '[]');
+      document.getElementById('commResidents').textContent = communityData.length;
+      document.getElementById('commInvoices').textContent = communityData.reduce((s, r) => s + r.invoiceCount, 0);
+      document.getElementById('commFindings').textContent = communityData.reduce((s, r) => s + r.findings.length, 0);
+      const avgAnnual = communityData.length > 0
+        ? '£' + (communityData.reduce((s, r) => s + (r.annualCost || r.totalCharged), 0) / communityData.length).toFixed(0)
+        : '-';
+      document.getElementById('commAvgAnnual').textContent = avgAnnual;
 
-  const list = document.getElementById('residentsList');
-  if (communityData.length === 0) {
-    list.innerHTML = '<div class="empty-state"><div class="icon">👥</div><p>No residents yet.</p></div>';
-  } else {
-    list.innerHTML = communityData.map(r => `
+      const list = document.getElementById('residentsList');
+      if (communityData.length === 0) {
+        list.innerHTML = '<div class="empty-state"><div class="icon">👥</div><p>No residents yet.</p></div>';
+      } else {
+        list.innerHTML = communityData.map(r => `
       <div class="resident-row">
         <div class="name">${r.residentName}</div>
         <div><span class="badge badge-blue">${r.invoiceCount} inv / ${(r.years || 1).toFixed(1)}yr</span></div>
@@ -1036,98 +1532,99 @@ function refreshCommunity() {
         <div class="amount">£${(r.annualCost || r.totalCharged).toFixed(0)}/yr</div>
       </div>
     `).join('');
-  }
+      }
 
-  const findingsDiv = document.getElementById('commonFindings');
-  if (communityData.length < 2) {
-    findingsDiv.innerHTML = '<p style="color: var(--muted); font-size: 0.85rem;">Need at least 2 residents to compare findings.</p>';
-    return;
-  }
+      const findingsDiv = document.getElementById('commonFindings');
+      if (communityData.length < 2) {
+        findingsDiv.innerHTML = '<p style="color: var(--muted); font-size: 0.85rem;">Need at least 2 residents to compare findings.</p>';
+        return;
+      }
 
-  const findingTypes = {};
-  for (const r of communityData) {
-    for (const f of r.findings) {
-      if (!findingTypes[f.type]) findingTypes[f.type] = { ...f, residents: [] };
-      findingTypes[f.type].residents.push(r.residentName);
-    }
-  }
-  findingsDiv.innerHTML = Object.values(findingTypes).map(f => `
+      const findingTypes = {};
+      for (const r of communityData) {
+        for (const f of r.findings) {
+          if (!findingTypes[f.type]) findingTypes[f.type] = { ...f, residents: [] };
+          findingTypes[f.type].residents.push(r.residentName);
+        }
+      }
+      findingsDiv.innerHTML = Object.values(findingTypes).map(f => `
     <div class="finding ${f.severity === 'MEDIUM' ? 'warning' : ''}">
       <h4><span class="badge badge-${f.severity === 'HIGH' ? 'red' : 'orange'}">${f.severity}</span> ${f.title}</h4>
       <p>Reported by ${f.residents.length} of ${communityData.length} residents: ${f.residents.join(', ')}</p>
     </div>
   `).join('');
-}
-
-function exportMyData() {
-  if (!analysisResults) { alert('Analyse your invoices first.'); return; }
-  const data = communityData.find(r => r.accountNumber === analysisResults.accountNumber);
-  if (!data) return;
-  const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a'); a.href = url; a.download = `newton_data_${data.accountNumber}.json`; a.click();
-  URL.revokeObjectURL(url);
-}
-
-function importData(file) {
-  if (!file) return;
-  const reader = new FileReader();
-  reader.onload = e => {
-    try {
-      const data = JSON.parse(e.target.result);
-      if (!data.accountNumber || !data.residentName) { alert('Invalid data file.'); return; }
-      const existing = communityData.findIndex(r => r.accountNumber === data.accountNumber);
-      if (existing >= 0) communityData[existing] = data;
-      else communityData.push(data);
-      localStorage.setItem('newton_community', JSON.stringify(communityData));
-      refreshCommunity();
-      alert(`Imported data for ${data.residentName}.`);
-    } catch (err) { alert('Could not parse the file. Please check it\'s a valid export.'); }
-  };
-  reader.readAsText(file);
-}
-
-function exportCommunityReport() {
-  if (communityData.length === 0) { alert('No community data yet.'); return; }
-  let report = `NEWTON PROPERTY MANAGEMENT — COMMUNITY BILLING REPORT\n`;
-  report += `Balfour Park, Newcraighall, Edinburgh\n`;
-  report += `Generated: ${new Date().toLocaleDateString('en-GB')}\n`;
-  report += `${'='.repeat(60)}\n\n`;
-  report += `SUMMARY\n`;
-  report += `Residents submitted: ${communityData.length}\n`;
-  report += `Total invoices analysed: ${communityData.reduce((s, r) => s + r.invoiceCount, 0)}\n`;
-  report += `Total findings: ${communityData.reduce((s, r) => s + r.findings.length, 0)}\n`;
-  report += `Average annual cost: £${(communityData.reduce((s, r) => s + r.totalCharged, 0) / communityData.length).toFixed(2)}\n\n`;
-  report += `${'='.repeat(60)}\n\n`;
-  report += `INDIVIDUAL REPORTS\n\n`;
-  for (const r of communityData) {
-    report += `${r.residentName} (Account: ${r.accountNumber})\n`;
-    report += `  Invoices: ${r.invoiceCount} | Total charged: £${r.totalCharged.toFixed(2)}\n`;
-    report += `  Findings: ${r.findings.length}\n`;
-    for (const f of r.findings) {
-      report += `    [${f.severity}] ${f.title}\n`;
-      report += `    ${f.detail}\n\n`;
     }
-    report += `${'-'.repeat(40)}\n`;
-  }
-  report += `\nCOMMON FINDINGS\n\n`;
-  const findingTypes = {};
-  for (const r of communityData) {
-    for (const f of r.findings) {
-      if (!findingTypes[f.type]) findingTypes[f.type] = { ...f, residents: [] };
-      findingTypes[f.type].residents.push(r.residentName);
-    }
-  }
-  for (const f of Object.values(findingTypes)) {
-    report += `[${f.severity}] ${f.title}\n`;
-    report += `Reported by ${f.residents.length}/${communityData.length} residents: ${f.residents.join(', ')}\n\n`;
-  }
 
-  const blob = new Blob([report], { type: 'text/plain' });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a'); a.href = url; a.download = `Newton_Community_Report_${new Date().toISOString().split('T')[0]}.txt`; a.click();
-  URL.revokeObjectURL(url);
-}
-</script>
+    function exportMyData() {
+      if (!analysisResults) { alert('Analyse your invoices first.'); return; }
+      const data = communityData.find(r => r.accountNumber === analysisResults.accountNumber);
+      if (!data) return;
+      const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a'); a.href = url; a.download = `newton_data_${data.accountNumber}.json`; a.click();
+      URL.revokeObjectURL(url);
+    }
+
+    function importData(file) {
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = e => {
+        try {
+          const data = JSON.parse(e.target.result);
+          if (!data.accountNumber || !data.residentName) { alert('Invalid data file.'); return; }
+          const existing = communityData.findIndex(r => r.accountNumber === data.accountNumber);
+          if (existing >= 0) communityData[existing] = data;
+          else communityData.push(data);
+          localStorage.setItem('newton_community', JSON.stringify(communityData));
+          refreshCommunity();
+          alert(`Imported data for ${data.residentName}.`);
+        } catch (err) { alert('Could not parse the file. Please check it\'s a valid export.'); }
+      };
+      reader.readAsText(file);
+    }
+
+    function exportCommunityReport() {
+      if (communityData.length === 0) { alert('No community data yet.'); return; }
+      let report = `NEWTON PROPERTY MANAGEMENT — COMMUNITY BILLING REPORT\n`;
+      report += `Balfour Park, Newcraighall, Edinburgh\n`;
+      report += `Generated: ${new Date().toLocaleDateString('en-GB')}\n`;
+      report += `${'='.repeat(60)}\n\n`;
+      report += `SUMMARY\n`;
+      report += `Residents submitted: ${communityData.length}\n`;
+      report += `Total invoices analysed: ${communityData.reduce((s, r) => s + r.invoiceCount, 0)}\n`;
+      report += `Total findings: ${communityData.reduce((s, r) => s + r.findings.length, 0)}\n`;
+      report += `Average annual cost: £${(communityData.reduce((s, r) => s + r.totalCharged, 0) / communityData.length).toFixed(2)}\n\n`;
+      report += `${'='.repeat(60)}\n\n`;
+      report += `INDIVIDUAL REPORTS\n\n`;
+      for (const r of communityData) {
+        report += `${r.residentName} (Account: ${r.accountNumber})\n`;
+        report += `  Invoices: ${r.invoiceCount} | Total charged: £${r.totalCharged.toFixed(2)}\n`;
+        report += `  Findings: ${r.findings.length}\n`;
+        for (const f of r.findings) {
+          report += `    [${f.severity}] ${f.title}\n`;
+          report += `    ${f.detail}\n\n`;
+        }
+        report += `${'-'.repeat(40)}\n`;
+      }
+      report += `\nCOMMON FINDINGS\n\n`;
+      const findingTypes = {};
+      for (const r of communityData) {
+        for (const f of r.findings) {
+          if (!findingTypes[f.type]) findingTypes[f.type] = { ...f, residents: [] };
+          findingTypes[f.type].residents.push(r.residentName);
+        }
+      }
+      for (const f of Object.values(findingTypes)) {
+        report += `[${f.severity}] ${f.title}\n`;
+        report += `Reported by ${f.residents.length}/${communityData.length} residents: ${f.residents.join(', ')}\n\n`;
+      }
+
+      const blob = new Blob([report], { type: 'text/plain' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a'); a.href = url; a.download = `Newton_Community_Report_${new Date().toISOString().split('T')[0]}.txt`; a.click();
+      URL.revokeObjectURL(url);
+    }
+  </script>
 </body>
+
 </html>
