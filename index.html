@@ -84,6 +84,7 @@
       color: var(--text);
       line-height: 1.6;
       -webkit-font-smoothing: antialiased;
+      overflow-x: hidden;
     }
 
     h1,
@@ -104,49 +105,70 @@
     }
 
     header {
-      border-bottom: 2px solid var(--border);
       background: var(--bg);
-      position: sticky;
-      top: 0;
-      z-index: 50;
     }
 
     .container {
       max-width: 1024px;
       margin: 0 auto;
-      padding: 0 24px;
+      padding: 0 40px;
+      width: 100%;
+      box-sizing: border-box;
     }
 
-    .header-inner {
+    @media (max-width: 768px) {
+      .container {
+        padding: 0 20px;
+      }
+    }
+
+    .header-top {
       display: flex;
       justify-content: space-between;
-      align-items: flex-end;
-      padding: 40px 0 0 0;
+      align-items: center;
+      padding-top: 56px;
+      padding-bottom: 40px;
       gap: 32px;
     }
 
     @media (max-width: 768px) {
-      .header-inner {
+      .header-top {
         flex-direction: column;
         align-items: flex-start;
         padding-top: 32px;
-        gap: 16px;
+        padding-bottom: 24px;
+        gap: 24px;
       }
     }
 
+    .brand {
+      flex: 1;
+      max-width: 700px;
+    }
+
     .brand h1 {
-      font-size: 1.75rem;
+      font-size: 2.5rem;
       font-weight: 900;
       letter-spacing: -0.05em;
-      line-height: 1.1;
+      line-height: 1;
+      text-transform: uppercase;
     }
 
     .brand p {
       color: var(--text-muted);
       font-size: 0.875rem;
       font-family: var(--font-mono);
-      margin-top: 8px;
+      margin-top: 12px;
       text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .sticky-nav {
+      position: sticky;
+      top: 0;
+      z-index: 50;
+      background: var(--bg);
+      border-bottom: 2px solid var(--border);
     }
 
     /* === NAVIGATION === */
@@ -161,7 +183,7 @@
       background: transparent;
       color: var(--text-muted);
       border: none;
-      padding: 12px 0 12px 0;
+      padding: 16px 0;
       cursor: pointer;
       font-size: 0.875rem;
       font-weight: 600;
@@ -233,29 +255,64 @@
       margin: 32px 0 16px;
     }
 
-    /* === UPLOAD INTERFACE === */
-    .graphic-banner {
-      width: 100%;
-      height: 280px;
-      background-image: url('newton_graphic.png');
-      background-size: cover;
-      background-position: center;
-      border: 1px solid var(--border-light);
-      margin-bottom: 32px;
+    /* === EDITORIAL SPLIT LAYOUT === */
+    .card.editorial-layout {
+      display: grid;
+      grid-template-columns: 1.2fr 0.8fr;
+      padding: 0;
+      gap: 0;
+      overflow: hidden;
+    }
+
+    .editorial-text {
+      padding: 40px;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .editorial-image {
+      background: var(--surface-hover);
+      border-left: 1px solid var(--border-light);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 40px;
       position: relative;
     }
 
-    @media (prefers-color-scheme: dark) {
-      .graphic-banner {
-        filter: brightness(0.9) contrast(1.05);
+    .editorial-image img {
+      width: 100%;
+      height: auto;
+      max-height: 480px;
+      object-fit: contain;
+      filter: contrast(1.1) grayscale(0.1);
+      user-select: none;
+      pointer-events: none;
+      drop-shadow: 0 10px 20px rgba(0,0,0,0.1);
+    }
+
+    @media (max-width: 768px) {
+      .card.editorial-layout {
+        grid-template-columns: 1fr;
+      }
+      .editorial-text {
+        padding: 24px;
+      }
+      .editorial-image {
+        padding: 24px;
+        border-left: none;
+        border-top: 1px solid var(--border-light);
+      }
+      .editorial-image img {
+        max-height: 240px;
       }
     }
 
-    .graphic-banner::after {
-      content: '';
-      position: absolute;
-      inset: 0;
-      background: linear-gradient(to top, var(--surface) 0%, transparent 70%);
+    @media (prefers-color-scheme: dark) {
+      .editorial-image img {
+        opacity: 0.85;
+        filter: contrast(1.1) brightness(0.9);
+      }
     }
 
     .drop-zone {
@@ -783,7 +840,7 @@
       header,
       .btn,
       .tab-bar,
-      .graphic-banner {
+      .editorial-image {
         display: none !important;
       }
 
@@ -839,15 +896,19 @@
 
   <div id="app-wrapper">
     <header>
-      <div class="container header-inner">
+      <div class="container header-top">
         <div class="brand">
           <h1>Newton Invoice Analyser</h1>
           <p>Balfour Park Residents — Billing Discrepancy Tool</p>
         </div>
-        <div class="tab-bar">
-          <button class="tab-btn active" onclick="showTab('upload')">Upload Engine</button>
-          <button class="tab-btn" onclick="showTab('results')">Financial Ledger</button>
-          <button class="tab-btn" onclick="showTab('community')">Community Data</button>
+      </div>
+      <div class="sticky-nav">
+        <div class="container">
+          <div class="tab-bar">
+            <button class="tab-btn active" onclick="showTab('upload')">Upload Engine</button>
+            <button class="tab-btn" onclick="showTab('results')">Financial Ledger</button>
+            <button class="tab-btn" onclick="showTab('community')">Community Data</button>
+          </div>
         </div>
       </div>
     </header>
@@ -856,47 +917,51 @@
 
       <!-- UPLOAD TAB -->
       <div id="tab-upload" class="tab-content active">
-        <div class="card">
-          <div class="graphic-banner"></div>
-          <h2>Data Extraction Protocol</h2>
-          <p>
-            Drop your Newton Property Management PDF invoices below. This tool locally parses the documents in your
-            browser, extracting billing anomalies and identifying potential overcharges. Zero data is sent to the cloud.
-          </p>
+        <div class="card editorial-layout">
+          <div class="editorial-text">
+            <h2>Data Extraction Protocol</h2>
+            <p>
+              Drop your Newton Property Management PDF invoices below. This tool locally parses the documents in your
+              browser, extracting billing anomalies and identifying potential overcharges. Zero data is sent to the cloud.
+            </p>
 
-          <div class="drop-zone" id="dropZone" onclick="document.getElementById('fileInput').click()">
-            <div class="big">📄</div>
-            <p>Drop PDF invoices here or click to select</p>
-            <span>Accepts common charge invoices & outstanding balance notices</span>
-          </div>
-          <input type="file" id="fileInput" multiple accept=".pdf" style="display:none"
-            onchange="handleFiles(this.files)">
+            <div class="drop-zone" id="dropZone" onclick="document.getElementById('fileInput').click()">
+              <div class="big">📄</div>
+              <p>Drop PDF invoices here or click to select</p>
+              <span>Accepts common charge invoices & outstanding balance notices</span>
+            </div>
+            <input type="file" id="fileInput" multiple accept=".pdf" style="display:none"
+              onchange="handleFiles(this.files)">
 
-          <div id="fileList" class="hidden" style="margin-top: 32px;">
-            <h3>Queued Documents</h3>
-            <table>
-              <thead>
-                <tr>
-                  <th>File</th>
-                  <th>Status</th>
-                  <th>Invoice #</th>
-                  <th>Total</th>
-                </tr>
-              </thead>
-              <tbody id="fileListBody"></tbody>
-            </table>
-            <div style="margin-top: 24px; display: flex; gap: 12px; flex-wrap: wrap;">
-              <button class="btn btn-primary" onclick="analyseAll()">Commence Analysis</button>
-              <button class="btn btn-outline" onclick="clearAll()">Clear Buffer</button>
+            <div id="fileList" class="hidden" style="margin-top: 32px;">
+              <h3>Queued Documents</h3>
+              <table>
+                <thead>
+                  <tr>
+                    <th>File</th>
+                    <th>Status</th>
+                    <th>Invoice #</th>
+                    <th>Total</th>
+                  </tr>
+                </thead>
+                <tbody id="fileListBody"></tbody>
+              </table>
+              <div style="margin-top: 24px; display: flex; gap: 12px; flex-wrap: wrap;">
+                <button class="btn btn-primary" onclick="analyseAll()">Commence Analysis</button>
+                <button class="btn btn-outline" onclick="clearAll()">Clear Buffer</button>
+              </div>
+            </div>
+
+            <div id="parseProgress" class="hidden" style="margin-top: 32px;">
+              <p style="font-size: 0.875rem; font-family: var(--font-mono); font-weight: 600; text-transform: uppercase;">
+                Crunching Document Matrices...</p>
+              <div class="progress-bar">
+                <div class="fill" id="progressFill" style="width: 0%"></div>
+              </div>
             </div>
           </div>
-
-          <div id="parseProgress" class="hidden" style="margin-top: 32px;">
-            <p style="font-size: 0.875rem; font-family: var(--font-mono); font-weight: 600; text-transform: uppercase;">
-              Crunching Document Matrices...</p>
-            <div class="progress-bar">
-              <div class="fill" id="progressFill" style="width: 0%"></div>
-            </div>
+          <div class="editorial-image">
+            <img src="newton_graphic.png" alt="Newton Property Factors" />
           </div>
         </div>
 
